@@ -1,2 +1,1 @@
-# microservice-poster
-HLS Project v2.0. Mashkin Grigory, Kadilov Mikhail, Lazarev Dmitry. Group: P3430
+# Лабораторная работа №2. Высокопроизводительные системы. Микросервисная информационная система для покупки/продажи билетов на события
