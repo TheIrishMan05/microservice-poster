@@ -1,0 +1,177 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-ticket-reservations
+      author: dev
+      changes:
+        - createTable:
+            tableName: ticket_reservations
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_ticket_reservations
+                    nullable: false
+
+              - column:
+                  name: public_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_ticket_reservations_public_id
+
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: ticket_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: quantity
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: unit_price
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: ticket_reservations
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_ticket_reservations_event
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: ticket_reservations
+            baseColumnNames: ticket_type_id
+            referencedTableName: ticket_types
+            referencedColumnNames: id
+            constraintName: fk_ticket_reservations_ticket_type
+            onDelete: RESTRICT
+
+        - sql:
+            sql: |
+              ALTER TABLE ticket_reservations
+              ADD CONSTRAINT ck_ticket_reservations_status
+              CHECK (status IN ('ACTIVE', 'CANCELLED'));
+
+        - sql:
+            sql: |
+              ALTER TABLE ticket_reservations
+              ADD CONSTRAINT ck_ticket_reservations_quantity
+              CHECK (quantity > 0);
+
+  - changeSet:
+      id: 009-create-ticket-reservation-holds
+      author: dev
+      changes:
+        - createTable:
+            tableName: ticket_reservation_holds
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_ticket_reservation_holds
+                    nullable: false
+
+              - column:
+                  name: reservation_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: ticket_reservation_holds
+            baseColumnNames: reservation_id
+            referencedTableName: ticket_reservations
+            referencedColumnNames: id
+            constraintName: fk_ticket_reservation_holds_reservation
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: ticket_reservation_holds
+            indexName: idx_ticket_reservation_holds_reservation_id
+            columns:
+              - column:
+                  name: reservation_id
+
+  - changeSet:
+      id: 009-extend-seats-for-inventory
+      author: dev
+      changes:
+        - addColumn:
+            tableName: seats
+            columns:
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: ticket_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: reservation_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: true
+
+        - addForeignKeyConstraint:
+            baseTableName: seats
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_seats_event
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: seats
+            baseColumnNames: ticket_type_id
+            referencedTableName: ticket_types
+            referencedColumnNames: id
+            constraintName: fk_seats_ticket_type
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: seats
+            indexName: idx_seats_event_type_availability
+            columns:
+              - column:
+                  name: event_id
+              - column:
+                  name: ticket_type_id
+              - column:
+                  name: reservation_id
+              - column:
+                  name: ticket_id
