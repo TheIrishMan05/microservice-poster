@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-drop-registration-waitlist-status
+      author: dev
+      changes:
+        - sql:
+            sql: |
+              UPDATE event_registrations SET status = 'CANCELED' WHERE status = 'WAITLIST';
+
+        - sql:
+            sql: |
+              ALTER TABLE event_registrations DROP CONSTRAINT IF EXISTS ck_event_registrations_status;
+
+        - sql:
+            sql: |
+              ALTER TABLE event_registrations
+              ADD CONSTRAINT ck_event_registrations_status CHECK (status IN ('CONFIRMED', 'CANCELED'));

@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-seats-table
+      author: dev
+      changes:
+        - createTable:
+            tableName: seats
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_seats
+                    nullable: false
+
+              - column:
+                  name: ticket_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    unique: true
+                    uniqueConstraintName: uk_seats_ticket_id
+
+              - column:
+                  name: row_label
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: seat_number
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: sector_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: x_coordinate
+                  type: DOUBLE PRECISION
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: y_coordinate
+                  type: DOUBLE PRECISION
+                  constraints:
+                    nullable: true

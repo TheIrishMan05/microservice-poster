@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-create-ticket-waitlists
+      author: dev
+      changes:
+        - createTable:
+            tableName: ticket_waitlists
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_ticket_waitlists
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: ticket_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: ticket_waitlists
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_ticket_waitlists_event
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: ticket_waitlists
+            baseColumnNames: ticket_type_id
+            referencedTableName: ticket_types
+            referencedColumnNames: id
+            constraintName: fk_ticket_waitlists_ticket_type
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: ticket_waitlists
+            indexName: idx_ticket_waitlists_event_type_status
+            columns:
+              - column:
+                  name: event_id
+              - column:
+                  name: ticket_type_id
+              - column:
+                  name: status
+
+        - sql:
+            sql: |
+              ALTER TABLE ticket_waitlists
+              ADD CONSTRAINT ck_ticket_waitlists_status
+              CHECK (status IN ('WAITING', 'CANCELLED', 'FULFILLED'));
+
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX uk_ticket_waitlists_active_user_event_type
+              ON ticket_waitlists (user_id, event_id, ticket_type_id)
+              WHERE status = 'WAITING';
