@@ -26,11 +26,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-        - addPrimaryKey:
-            tableName: event_tags
-            columnNames: event_id, tag_id
-            constraintName: pk_event_tags
-
         - addForeignKeyConstraint:
             baseTableName: event_tags
             baseColumnNames: event_id
