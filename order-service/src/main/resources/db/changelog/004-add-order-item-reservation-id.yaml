@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-add-order-item-reservation-id
+      author: dev
+      changes:
+        - addColumn:
+            tableName: order_items
+            columns:
+              - column:
+                  name: reservation_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: true
+
+        - createIndex:
+            tableName: order_items
+            indexName: idx_order_items_reservation_id
+            columns:
+              - column:
+                  name: reservation_id
