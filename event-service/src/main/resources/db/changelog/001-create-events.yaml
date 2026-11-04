@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-events
+      author: dev
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_events
+                    nullable: false
+
+              - column:
+                  name: event_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: location
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: date_time
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: block_reason
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_date_time
+            columns:
+              - column:
+                  name: date_time

@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-events.yaml
+  - include:
+      file: db/changelog/002-create-tags.yaml
+  - include:
+      file: db/changelog/003-create-event-tags.yaml
+  - include:
+      file: db/changelog/004-create-ticket-types.yaml
+  - include:
+      file: db/changelog/005-create-seats.yaml
+  - include:
+      file: db/changelog/006-create-event-registrations.yaml
+  - include:
+      file: db/changelog/007-create-ticket-waitlist.yaml
+  - include:
+      file: db/changelog/008-drop-registration-waitlist-status.yaml

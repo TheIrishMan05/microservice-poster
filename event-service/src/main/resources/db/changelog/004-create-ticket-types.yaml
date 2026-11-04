@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-ticket-types
+      author: dev
+      changes:
+        - createTable:
+            tableName: ticket_types
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_ticket_types
+                    nullable: false
+
+              - column:
+                  name: type_name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_ticket_types_type_name
+
+              - column:
+                  name: price
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 004-seed-default-ticket-types
+      author: dev
+      changes:
+        - insert:
+            tableName: ticket_types
+            columns:
+              - column:
+                  name: type_name
+                  value: VIP
+              - column:
+                  name: price
+                  valueNumeric: 5000.00
+
+        - insert:
+            tableName: ticket_types
+            columns:
+              - column:
+                  name: type_name
+                  value: COMFORT
+              - column:
+                  name: price
+                  valueNumeric: 3500.00
+
+        - insert:
+            tableName: ticket_types
+            columns:
+              - column:
+                  name: type_name
+                  value: STANDARD
+              - column:
+                  name: price
+                  valueNumeric: 2000.00
+
+        

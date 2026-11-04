@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-seed-users
+      author: dev
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: email
+                  value: admin@poster.ru
+              - column:
+                  name: role
+                  value: ADMIN
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: censor
+              - column:
+                  name: email
+                  value: rkn@gov.ru
+              - column:
+                  name: role
+                  value: CENSOR
+        
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: chipinkos_manager
+              - column:
+                  name: email
+                  value: gangsta228@yandex.ru
+              - column:
+                  name: role
+                  value: SUPERUSER
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: kanye_west_manager
+              - column:
+                  name: email
+                  value: kkk1488@gmail.com
+              - column:
+                  name: role
+                  value: SUPERUSER
+        
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: kino_manager
+              - column:
+                  name: email
+                  value: legend1962@mail.ru
+              - column:
+                  name: role
+                  value: SUPERUSER

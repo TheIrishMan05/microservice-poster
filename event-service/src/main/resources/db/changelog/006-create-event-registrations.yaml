@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-event-registrations-table
+      author: dev
+      changes:
+        - createTable:
+            tableName: event_registrations
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_event_registrations
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: registration_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: event_registrations
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_event_registrations_event
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: event_registrations
+            indexName: idx_event_registrations_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: event_registrations
+            indexName: idx_event_registrations_event_id
+            columns:
+              - column:
+                  name: event_id
+                  
+        - sql:
+            sql: |
+              ALTER TABLE event_registrations 
+              ADD CONSTRAINT uk_event_registrations_user_event UNIQUE (user_id, event_id);
+              
+        - sql:
+            sql: |
+              ALTER TABLE event_registrations 
+              ADD CONSTRAINT ck_event_registrations_status CHECK (status IN ('CONFIRMED', 'WAITLIST', 'CANCELED'));
