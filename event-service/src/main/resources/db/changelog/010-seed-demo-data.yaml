@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-seed-demo-tags
+      author: dev
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO tags (name) VALUES
+                ('music'),
+                ('sports'),
+                ('theatre'),
+                ('festival'),
+                ('comedy')
+              ON CONFLICT (name) DO NOTHING;
+
+  - changeSet:
+      id: 010-seed-demo-events
+      author: dev
+      comment: 30 событий для infinite scroll (afterId + limit)
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO events (event_name, description, location, date_time, status)
+              SELECT
+                'Demo Event #' || lpad(i::text, 2, '0'),
+                'Seeded event for Swagger infinite scroll demo #' || i,
+                CASE (i % 3)
+                  WHEN 0 THEN 'Main Arena'
+                  WHEN 1 THEN 'Hall A'
+                  ELSE 'Open Air'
+                END,
+                TIMESTAMP '2026-06-01 19:00:00' + ((i - 1) || ' days')::interval,
+                CASE
+                  WHEN i <= 20 THEN 'ACTIVE'
+                  WHEN i <= 25 THEN 'PENDING'
+                  ELSE 'ACTIVE'
+                END
+              FROM generate_series(1, 30) AS i;
+
+  - changeSet:
+      id: 010-seed-demo-event-tags
+      author: dev
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO event_tags (event_id, tag_id)
+              SELECT e.id, t.id
+              FROM events e
+              CROSS JOIN LATERAL (
+                SELECT id FROM tags ORDER BY id LIMIT 1 OFFSET ((e.id - 1) % 5)
+              ) t
+              WHERE e.event_name LIKE 'Demo Event #%';
+
+  - changeSet:
+      id: 010-seed-demo-seats
+      author: dev
+      comment: Места для Demo Event #01 + VIP — чтобы order reserve/create работал из Swagger
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO seats (event_id, ticket_type_id, seat_number, row_label, sector_name)
+              SELECT
+                e.id,
+                tt.id,
+                s.n,
+                'A',
+                'VIP'
+              FROM events e
+              CROSS JOIN ticket_types tt
+              CROSS JOIN generate_series(1, 20) AS s(n)
+              WHERE e.event_name = 'Demo Event #01'
+                AND tt.type_name = 'VIP';

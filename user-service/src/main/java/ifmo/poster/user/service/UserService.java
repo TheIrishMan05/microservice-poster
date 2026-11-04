@@ -11,7 +11,6 @@ import ifmo.poster.user.mapper.UserMapper;
 import ifmo.poster.user.repository.NotificationRepository;
 import ifmo.poster.user.repository.UserRepository;
 import ifmo.poster.contracts.support.Pagination;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,12 +56,11 @@ public class UserService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<List<UserResponse>> findAll(int page, int size) {
+    public Mono<Page<UserResponse>> findAll(int page, int size) {
         return Mono.fromCallable(() -> {
                     Pagination.validate(page, size);
                     Pageable pageable = PageRequest.of(page, size);
-                    Page<User> users = userRepository.findAll(pageable);
-                    return users.map(UserMapper::toResponse).getContent();
+                    return userRepository.findAll(pageable).map(UserMapper::toResponse);
                 })
                 .subscribeOn(Schedulers.boundedElastic());
     }

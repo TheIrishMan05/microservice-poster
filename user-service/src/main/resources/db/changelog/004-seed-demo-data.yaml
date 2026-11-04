@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-seed-demo-users
+      author: dev
+      comment: Демо-пользователи для пагинации в Swagger (size=5 → несколько страниц)
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO users (username, email, role)
+              SELECT
+                'demo_user_' || lpad(i::text, 2, '0'),
+                'demo' || i || '@poster.ru',
+                'USER'
+              FROM generate_series(1, 25) AS i;
+
+  - changeSet:
+      id: 004-seed-demo-notifications
+      author: dev
+      comment: Уведомления admin (id=1) с X-Total-Count при GET /api/notifications
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO notifications (user_id, title, message, is_read, created_at)
+              SELECT
+                1,
+                'Demo notification #' || i,
+                'Seeded message for Swagger pagination demo #' || i,
+                (i % 3 = 0),
+                TIMESTAMP '2026-01-01 10:00:00' + (i || ' minutes')::interval
+              FROM generate_series(1, 25) AS i;

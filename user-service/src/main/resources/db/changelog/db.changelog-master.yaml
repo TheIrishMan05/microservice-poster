@@ -4,4 +4,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/002-create-notifications.yaml
   - include:
-      file: db/changelog/003-seed-users.yaml  
+      file: db/changelog/003-seed-users.yaml
+  - include:
+      file: db/changelog/004-seed-demo-data.yaml

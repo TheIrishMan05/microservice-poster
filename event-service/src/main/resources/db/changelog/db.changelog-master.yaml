@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/008-drop-registration-waitlist-status.yaml
   - include:
       file: db/changelog/009-create-ticket-reservations.yaml
+  - include:
+      file: db/changelog/010-seed-demo-data.yaml

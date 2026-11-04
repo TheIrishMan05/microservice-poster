@@ -20,8 +20,6 @@ flowchart LR
   OrderSvc --> OrderDb[("postgres-order")]
 ```
 
-![Архитектура microservice-poster](docs/architecture.png)
-
 Перед запуском создайте локальный файл окружения:
 
 ```powershell
@@ -121,3 +119,13 @@ HTTP 503 с понятным описанием ошибки.
 - Eureka UI: сервисы зарегистрированы;
 - health: `http://localhost:8080/actuator/health`;
 - Swagger: `http://localhost:8080/swagger-ui.html`.
+
+Пошаговый ручной сценарий (пагинация, infinite scroll, CRUD, заказ):  
+[docs/swagger-manual-test.md](docs/swagger-manual-test.md).
+
+Если БД уже была создана до seed-миграций, пересоздайте volumes:
+
+```powershell
+docker compose down -v
+docker compose up --build
+```
