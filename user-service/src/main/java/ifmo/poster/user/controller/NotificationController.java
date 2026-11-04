@@ -4,7 +4,7 @@ import ifmo.poster.user.dto.CreateNotificationRequest;
 import ifmo.poster.user.dto.NotificationResponse;
 import ifmo.poster.user.dto.UpdateNotificationRequest;
 import ifmo.poster.user.service.NotificationService;
-import ifmo.poster.user.support.Pagination;
+import ifmo.poster.contracts.support.Pagination;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -25,9 +25,6 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
-
-    public static final String TOTAL_COUNT_HEADER = "X-Total-Count";
-
     private final NotificationService notificationService;
 
     public NotificationController(NotificationService notificationService) {
@@ -73,7 +70,7 @@ public class NotificationController {
 
     private ResponseEntity<List<NotificationResponse>> toPagedResponse(Page<NotificationResponse> page) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add(TOTAL_COUNT_HEADER, String.valueOf(page.getTotalElements()));
+        headers.add(Pagination.TOTAL_COUNT_HEADER, String.valueOf(page.getTotalElements()));
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 }

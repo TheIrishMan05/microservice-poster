@@ -4,7 +4,7 @@ import ifmo.poster.user.dto.CreateUserRequest;
 import ifmo.poster.user.dto.UpdateUserRequest;
 import ifmo.poster.user.dto.UserResponse;
 import ifmo.poster.user.service.UserService;
-import ifmo.poster.user.support.Pagination;
+import ifmo.poster.contracts.support.Pagination;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
