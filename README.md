@@ -44,6 +44,15 @@ HTTP 503 с понятным описанием ошибки.
 Так разделяются границы: локальная БД заказа — через `@Transactional`, межсервисный
 ресурс — через reserve/compensate (saga-lite).
 
+## OpenAPI / Swagger
+
+Единая интерактивная документация доступна через API Gateway:
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Спеки сервисов: `/v3/api-docs/user-service`, `/v3/api-docs/event-service`, `/v3/api-docs/order-service`
+
+В UI можно переключать сервисы в выпадающем списке. `Try it out` ходит через gateway (`localhost:8080`).
+
 ## Проверка
 
 ```powershell
