@@ -11,6 +11,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
     
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("org.springframework.boot:spring-boot-http-converter")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
     
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j")
@@ -28,6 +29,7 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("com.squareup.okhttp3:mockwebserver")
     val lombokVersion = "1.18.34" 
 
     compileOnly("org.projectlombok:lombok:$lombokVersion")
