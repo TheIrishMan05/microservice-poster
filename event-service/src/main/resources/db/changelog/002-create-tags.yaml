@@ -1,24 +1,28 @@
 databaseChangeLog:
   - changeSet:
-      id: 002-create-event-tags
+      id: 002-create-tags
       author: dev
       changes:
         - createTable:
-            tableName: event_tags
+            tableName: tags
             columns:
               - column:
-                  name: event_id
+                  name: id
                   type: BIGINT
+                  autoIncrement: true
                   constraints:
+                    primaryKey: true
                     nullable: false
-
               - column:
-                  name: tag_id
-                  type: BIGINT
+                  name: name
+                  type: VARCHAR(100)
                   constraints:
                     nullable: false
-
-        - addPrimaryKey:
-            tableName: event_tags
-            columnNames: event_id, tag_id
-            constraintName: pk_event_tags
+                    unique: true
+        
+        - createIndex:
+            indexName: idx_tags_name
+            tableName: tags
+            columns:
+              - column:
+                  name: name
