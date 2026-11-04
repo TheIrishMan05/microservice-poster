@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/002-create-order-items.yaml
   - include:
       file: db/changelog/003-create-tickets.yaml
+  - include:
+      file: db/changelog/004-add-order-item-reservation-id.yaml

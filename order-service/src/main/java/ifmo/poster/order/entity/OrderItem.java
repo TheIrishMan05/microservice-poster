@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -53,6 +54,14 @@ public class OrderItem {
     )
     private BigDecimal price;
 
-    @OneToMany(mappedBy = "orderItem", fetch = FetchType.LAZY)
+    @Column(name = "reservation_id", length = 36)
+    private String reservationId;
+
+    @OneToMany(
+            mappedBy = "orderItem",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<Ticket> tickets = new ArrayList<>();
 }

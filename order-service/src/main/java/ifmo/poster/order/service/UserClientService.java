@@ -1,5 +1,7 @@
 package ifmo.poster.order.service;
 
+import feign.FeignException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.contracts.user.UserDto;
 import ifmo.poster.order.client.UserClient;
 import ifmo.poster.order.exception.ServiceUnavailableException;
@@ -26,9 +28,26 @@ public class UserClientService {
     }
 
     private Mono<UserDto> getByIdFallback(Long userId, Throwable cause) {
+        if (isNotFound(cause)) {
+            return Mono.error(new ResourceNotFoundException("Пользователь не найден: id=" + userId));
+        }
         return Mono.error(new ServiceUnavailableException(
                 "Сервис пользователей временно недоступен. userId=" + userId,
                 cause
         ));
+    }
+
+    private static boolean isNotFound(Throwable cause) {
+        Throwable current = cause;
+        while (current != null) {
+            if (current instanceof FeignException.NotFound) {
+                return true;
+            }
+            if (current instanceof FeignException feignException && feignException.status() == 404) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
