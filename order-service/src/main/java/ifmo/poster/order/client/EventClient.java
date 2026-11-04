@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "event-service", path = "/internal/events")
+@FeignClient(name = "event-service", url = "${clients.event-service.url:}", path = "/internal/events")
 public interface EventClient {
 
     @GetMapping("/{id}")

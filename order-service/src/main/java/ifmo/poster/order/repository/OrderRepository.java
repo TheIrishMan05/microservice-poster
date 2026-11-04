@@ -13,7 +13,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"items", "items.tickets"})
+    @EntityGraph(attributePaths = {"items"})
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findDetailedById(@Param("id") Long id);
 }
