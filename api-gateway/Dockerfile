@@ -24,16 +24,14 @@ COPY event-service/src event-service/src
 COPY order-service/src order-service/src
 COPY shared-contracts/src shared-contracts/src
 
-ARG MODULE_NAME=api-gateway
-RUN ./gradlew :${MODULE_NAME}:bootJar --no-daemon
+RUN ./gradlew :api-gateway:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 RUN apk add --no-cache curl
 
-ARG MODULE_NAME=api-gateway
-COPY --from=builder /app/${MODULE_NAME}/build/libs/*.jar app.jar
+COPY --from=builder /app/api-gateway/build/libs/*.jar app.jar
 
 EXPOSE 8080
 

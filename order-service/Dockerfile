@@ -24,16 +24,14 @@ COPY event-service/src event-service/src
 COPY order-service/src order-service/src
 COPY shared-contracts/src shared-contracts/src
 
-ARG MODULE_NAME=order-service
-RUN ./gradlew :${MODULE_NAME}:bootJar --no-daemon
+RUN ./gradlew :order-service:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 RUN apk add --no-cache curl
 
-ARG MODULE_NAME=order-service
-COPY --from=builder /app/${MODULE_NAME}/build/libs/*.jar app.jar
+COPY --from=builder /app/order-service/build/libs/*.jar app.jar
 
 EXPOSE 8083
 

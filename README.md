@@ -32,8 +32,12 @@ docker compose down
 | order-service | `http://localhost:8083` |
 | Postgres (user / event / order) | `5433` / `5434` / `5435` |
 
-`JAVA_OPTS` из `docker-compose.yml` (лимиты heap) реально применяются через `ENTRYPOINT` в Dockerfiles.  
-Готовность сервисов проверяется healthcheck'ами `/actuator/health`; зависимые сервисы ждут `service_healthy`.
+`JAVA_OPTS` из `docker-compose.yml` (лимиты heap) применяются через `ENTRYPOINT` в Dockerfiles.  
+Готовность — healthcheck `/actuator/health`, зависимости ждут `service_healthy`.
+
+Отдельная секция `networks:` не объявлена: Compose сам создаёт одну default-сеть проекта, в ней DNS-имена сервисов (`eureka-server`, `postgres-user`, …) резолвятся автоматически. Явная сеть понадобилась бы только для изоляции или external-сети.
+
+Хосты Eureka/Config и JDBC/R2DBC URL уже прописаны в `*/src/main/resources/application.properties` и `config-repo`; в compose для приложений остаются только `JAVA_OPTS` и `POSTGRES_USER`/`POSTGRES_PASSWORD` (подставляются в `${POSTGRES_*}` из config-repo).
 
 ## Маршрутизация через API Gateway
 
