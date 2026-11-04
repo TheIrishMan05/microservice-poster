@@ -1,4 +1,4 @@
-package ifmo.poster.user.exception;
+package ifmo.poster.contracts.exception;
 
 public class ConflictException extends RuntimeException {
 

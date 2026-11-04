@@ -6,7 +6,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-
 @Table("seats")
 @Getter
 @Setter
@@ -14,6 +13,18 @@ public class Seat {
 
     @Id
     private Long id;
+
+    @Column("ticket_id")
+    private Long ticketId;
+
+    @Column("event_id")
+    private Long eventId;
+
+    @Column("ticket_type_id")
+    private Long ticketTypeId;
+
+    @Column("reservation_id")
+    private String reservationId;
 
     @Column("row_label")
     private String row;

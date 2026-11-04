@@ -5,14 +5,15 @@ import ifmo.poster.user.dto.CreateUserRequest;
 import ifmo.poster.user.dto.UpdateUserRequest;
 import ifmo.poster.user.dto.UserResponse;
 import ifmo.poster.user.entity.User;
-import ifmo.poster.user.exception.ConflictException;
-import ifmo.poster.user.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.user.mapper.UserMapper;
 import ifmo.poster.user.repository.NotificationRepository;
 import ifmo.poster.user.repository.UserRepository;
-import ifmo.poster.user.support.Pagination;
+import ifmo.poster.contracts.support.Pagination;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -58,7 +59,8 @@ public class UserService {
 
     public Mono<List<UserResponse>> findAll(int page, int size) {
         return Mono.fromCallable(() -> {
-                    Pageable pageable = Pagination.of(page, size);
+                    Pagination.validate(page, size);
+                    Pageable pageable = PageRequest.of(page, size);
                     Page<User> users = userRepository.findAll(pageable);
                     return users.map(UserMapper::toResponse).getContent();
                 })

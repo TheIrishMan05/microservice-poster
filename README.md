@@ -13,7 +13,7 @@ Copy-Item .env.example .env
 | Путь | Сервис |
 | --- | --- |
 | `/api/users/**`, `/api/notifications/**` | `user-service` |
-| `/api/events/**`, `/api/registrations/**`, `/api/ticket-types/**`, `/api/ticket-waitlist/**` | `event-service` |
+| `/api/events/**`, `/api/registrations/**`, `/api/ticket-types/**`, `/api/ticket-waitlist/**`, `/api/tags/**` | `event-service` |
 | `/api/orders/**`, `/api/tickets/**` | `order-service` |
 
 Gateway находит экземпляры сервисов через Eureka. Для каждого запроса он сохраняет

@@ -1,7 +1,7 @@
 package ifmo.poster.user.controller;
 
-import ifmo.poster.user.exception.ConflictException;
-import ifmo.poster.user.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

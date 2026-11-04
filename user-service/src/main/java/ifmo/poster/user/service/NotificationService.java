@@ -5,12 +5,13 @@ import ifmo.poster.user.dto.NotificationResponse;
 import ifmo.poster.user.dto.UpdateNotificationRequest;
 import ifmo.poster.user.entity.Notification;
 import ifmo.poster.user.entity.User;
-import ifmo.poster.user.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.user.mapper.NotificationMapper;
 import ifmo.poster.user.repository.NotificationRepository;
 import ifmo.poster.user.repository.UserRepository;
-import ifmo.poster.user.support.Pagination;
+import ifmo.poster.contracts.support.Pagination;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -53,7 +54,8 @@ public class NotificationService {
 
     public Mono<Page<NotificationResponse>> findAll(Long userId, int page, int size) {
         return Mono.fromCallable(() -> {
-                    Pageable pageable = Pagination.of(page, size);
+                    Pagination.validate(page, size);
+                    Pageable pageable = PageRequest.of(page, size);
                     if (userId != null) {
                         requireUser(userId);
                         return notificationRepository

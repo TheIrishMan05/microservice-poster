@@ -10,11 +10,15 @@ import reactor.core.publisher.Mono;
 public interface EventRepository extends R2dbcRepository<Event, Long> {
 
     Flux<Event> findByStatus(EventStatus status);
+
     Mono<Event> findByIdAndStatus(Long id, EventStatus status);
-    @Query("SELECT * FROM events WHERE status = :status AND id > :lastSeenId ORDER BY id ASC LIMIT :limit")
-    Flux<Event> findNextBatchOfEvents(
-            EventStatus status, 
-            Long lastSeenId, 
-            int limit
-    );
+
+    @Query("""
+            SELECT * FROM events
+            WHERE (:status IS NULL OR status = :status)
+              AND id > :lastSeenId
+            ORDER BY id ASC
+            LIMIT :limit
+            """)
+    Flux<Event> findNextBatchOfEvents(String status, Long lastSeenId, int limit);
 }
