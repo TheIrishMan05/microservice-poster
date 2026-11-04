@@ -1,5 +1,5 @@
 services:
-  
+
   postgres-user:
     image: postgres:15-alpine
     container_name: db-user
@@ -13,10 +13,10 @@ services:
       - pgdata-user:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d user_db"]
-      interval: 10s        
-      timeout: 10s         
-      retries: 10          
-      start_period: 30s  
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - poster-net
 
@@ -33,10 +33,10 @@ services:
       - pgdata-event:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d event_db"]
-      interval: 10s        
-      timeout: 10s         
-      retries: 10          
-      start_period: 30s    
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - poster-net
 
@@ -53,13 +53,12 @@ services:
       - pgdata-order:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d order_db"]
-      interval: 10s        
-      timeout: 10s         
-      retries: 10          
-      start_period: 30s  
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - poster-net
-
 
   eureka-server:
     build:
@@ -71,6 +70,12 @@ services:
     environment:
       SERVER_PORT: 8761
       JAVA_OPTS: "-Xmx256m"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
     networks:
       - poster-net
     restart: on-failure
@@ -91,7 +96,13 @@ services:
       - ./config-repo:/app/config-repo:ro
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
     networks:
       - poster-net
     restart: on-failure
@@ -110,9 +121,15 @@ services:
       JAVA_OPTS: "-Xmx256m"
     depends_on:
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       config-server:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     networks:
       - poster-net
     restart: on-failure
@@ -128,22 +145,25 @@ services:
       SERVER_PORT: 8081
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/user_db
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_LIQUIBASE_ENABLED: true
-      
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-user:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       config-server:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
     networks:
       - poster-net
     restart: on-failure
@@ -159,28 +179,30 @@ services:
       SERVER_PORT: 8082
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres-event:5432/event_db
       SPRING_R2DBC_USERNAME: ${POSTGRES_USER}
       SPRING_R2DBC_PASSWORD: ${POSTGRES_PASSWORD}
-      
       SPRING_LIQUIBASE_URL: jdbc:postgresql://postgres-event:5432/event_db
       SPRING_LIQUIBASE_USER: ${POSTGRES_USER}
       SPRING_LIQUIBASE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_LIQUIBASE_CHANGELOG: classpath:db/changelog/db.changelog-master.yaml
       SPRING_LIQUIBASE_ENABLED: true
-      
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-event:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       config-server:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
     networks:
       - poster-net
     restart: on-failure
@@ -196,30 +218,32 @@ services:
       SERVER_PORT: 8083
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-order:5432/order_db
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_LIQUIBASE_ENABLED: true
-      
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-order:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       config-server:
-        condition: service_started
+        condition: service_healthy
       user-service:
-        condition: service_started
+        condition: service_healthy
       event-service:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
     networks:
       - poster-net
     restart: on-failure
-
 
 networks:
   poster-net:

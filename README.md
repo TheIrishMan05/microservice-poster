@@ -6,6 +6,35 @@
 Copy-Item .env.example .env
 ```
 
+## Запуск стека (Docker Compose)
+
+Нужен Docker Desktop. Сборка и подъём всего стенда:
+
+```powershell
+docker compose up --build
+```
+
+Остановка:
+
+```powershell
+docker compose down
+```
+
+### Порты
+
+| Сервис | URL / порт |
+| --- | --- |
+| API Gateway | `http://localhost:8080` |
+| Eureka Dashboard | `http://localhost:8761` |
+| Config Server | `http://localhost:8888` |
+| user-service | `http://localhost:8081` |
+| event-service | `http://localhost:8082` |
+| order-service | `http://localhost:8083` |
+| Postgres (user / event / order) | `5433` / `5434` / `5435` |
+
+`JAVA_OPTS` из `docker-compose.yml` (лимиты heap) реально применяются через `ENTRYPOINT` в Dockerfiles.  
+Готовность сервисов проверяется healthcheck'ами `/actuator/health`; зависимые сервисы ждут `service_healthy`.
+
 ## Маршрутизация через API Gateway
 
 Внешняя точка входа: `http://localhost:8080`.
@@ -55,6 +84,14 @@ HTTP 503 с понятным описанием ошибки.
 
 ## Проверка
 
+Локальные тесты (нужен Docker Desktop для Testcontainers):
+
 ```powershell
 .\gradlew.bat test
 ```
+
+После `docker compose up --build` можно проверить:
+
+- Eureka UI: сервисы зарегистрированы;
+- health: `http://localhost:8080/actuator/health`;
+- Swagger: `http://localhost:8080/swagger-ui.html`.

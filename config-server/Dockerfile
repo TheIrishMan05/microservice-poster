@@ -6,7 +6,6 @@ COPY gradlew ./
 COPY gradle/ gradle/
 COPY settings.gradle.kts build.gradle.kts ./
 
-
 COPY eureka-server/build.gradle.kts eureka-server/
 COPY config-server/build.gradle.kts config-server/
 COPY api-gateway/build.gradle.kts api-gateway/
@@ -17,7 +16,6 @@ COPY shared-contracts/build.gradle.kts shared-contracts/
 
 RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon || true
 
-
 COPY eureka-server/src eureka-server/src
 COPY config-server/src config-server/src
 COPY api-gateway/src api-gateway/src
@@ -26,17 +24,17 @@ COPY event-service/src event-service/src
 COPY order-service/src order-service/src
 COPY shared-contracts/src shared-contracts/src
 
-
 ARG MODULE_NAME=config-server
 RUN ./gradlew :${MODULE_NAME}:bootJar --no-daemon
-
 
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
+RUN apk add --no-cache curl
+
 ARG MODULE_NAME=config-server
 COPY --from=builder /app/${MODULE_NAME}/build/libs/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8888
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

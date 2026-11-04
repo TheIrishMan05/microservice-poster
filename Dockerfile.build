@@ -1,12 +1,11 @@
-# Dockerfile.build
+# Full multi-module build (optional; compose uses per-service Dockerfiles).
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-COPY settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY settings.gradle.kts build.gradle.kts ./
 COPY gradlew ./
 COPY gradle/ gradle/
-
 
 RUN chmod +x gradlew
 
