@@ -24,9 +24,31 @@
 hs_err_pid*
 replay_pid*
 
+# Local environment (keep .env.example tracked)
+.env
 *.env
+!.env.example
 
-# Gradle and IDE output
+# Gradle and build output
 .gradle/
 **/build/
 **/bin/
+**/out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Coverage / reports
+jacoco/
+*.exec
