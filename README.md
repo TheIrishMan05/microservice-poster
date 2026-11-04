@@ -1,5 +1,27 @@
 # Лабораторная работа №2. Высокопроизводительные системы. Микросервисная информационная система для покупки/продажи билетов на события
 
+## Архитектура
+
+```mermaid
+flowchart LR
+  Client --> Gateway["api-gateway:8080"]
+  Gateway --> Eureka["eureka-server:8761"]
+  Gateway --> UserSvc["user-service:8081"]
+  Gateway --> EventSvc["event-service:8082"]
+  Gateway --> OrderSvc["order-service:8083"]
+  Gateway --> Config["config-server:8888"]
+  UserSvc --> Config
+  EventSvc --> Config
+  OrderSvc --> Config
+  OrderSvc -->|"Feign + CB"| UserSvc
+  OrderSvc -->|"Feign + CB"| EventSvc
+  UserSvc --> UserDb[("postgres-user")]
+  EventSvc --> EventDb[("postgres-event")]
+  OrderSvc --> OrderDb[("postgres-order")]
+```
+
+![Архитектура microservice-poster](docs/architecture.png)
+
 Перед запуском создайте локальный файл окружения:
 
 ```powershell
