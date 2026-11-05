@@ -1,6 +1,6 @@
 rootProject.name = "microservice-poster"
 
-include(
+listOf(
     "shared-contracts",
     "eureka-server",
     "config-server",
@@ -8,4 +8,8 @@ include(
     "user-service",
     "event-service",
     "order-service"
-)
+).forEach { name ->
+    if (file(name).exists()) {
+        include(name)
+    }
+}

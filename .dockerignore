@@ -1,0 +1,16 @@
+.git
+.idea
+.vscode
+**/.gradle
+**/build
+**/bin
+**/out
+**/.DS_Store
+**/*.md
+.env
+*.env
+!/.env.example
+jacoco
+**/coverage
+agent-transcripts
+terminals
