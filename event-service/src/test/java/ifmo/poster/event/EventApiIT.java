@@ -329,6 +329,69 @@ class EventApiIT {
                 .expectStatus().isOk();
     }
 
+    @Test
+    void bulkCreateEventsAndClearDatabase() {
+        webTestClient.post()
+                .uri("/api/events/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "events", List.of(
+                                Map.of(
+                                        "eventName", "Bulk Event A",
+                                        "description", "Bulk A",
+                                        "location", "Hall A",
+                                        "dateTime", LocalDateTime.now().plusDays(1).toString(),
+                                        "status", EventStatus.PENDING.name(),
+                                        "tagNames", List.of("bulk")
+                                ),
+                                Map.of(
+                                        "eventName", "Bulk Event B",
+                                        "description", "Bulk B",
+                                        "location", "Hall B",
+                                        "dateTime", LocalDateTime.now().plusDays(2).toString(),
+                                        "status", EventStatus.ACTIVE.name(),
+                                        "tagNames", List.of("bulk")
+                                )
+                        )
+                ))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(2)
+                .jsonPath("$[0].eventName").isEqualTo("Bulk Event A")
+                .jsonPath("$[1].eventName").isEqualTo("Bulk Event B");
+
+        webTestClient.delete()
+                .uri("/api/events/data")
+                .exchange()
+                .expectStatus().isNoContent();
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/events")
+                        .queryParam("afterId", 0)
+                        .queryParam("limit", 10)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(0);
+
+        // восстанавливаем справочники из seed — другие тесты класса на них завязаны
+        createTicketType("VIP");
+        createTicketType("STANDARD");
+    }
+
+    @Test
+    void rejectsEmptyBulkCreateEvents() {
+        webTestClient.post()
+                .uri("/api/events/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("events", List.of()))
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
     @SuppressWarnings("unchecked")
     private Long createEvent(String name, EventStatus status, List<String> tags) {
         Map<String, Object> created = webTestClient.post()

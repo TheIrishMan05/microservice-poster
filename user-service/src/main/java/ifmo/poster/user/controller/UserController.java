@@ -1,5 +1,6 @@
 package ifmo.poster.user.controller;
 
+import ifmo.poster.user.dto.BulkCreateUsersRequest;
 import ifmo.poster.user.dto.CreateUserRequest;
 import ifmo.poster.user.dto.UpdateUserRequest;
 import ifmo.poster.user.dto.UserResponse;
@@ -36,6 +37,19 @@ public class UserController {
     public Mono<ResponseEntity<UserResponse>> create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request)
                 .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @PostMapping("/bulk")
+    public Mono<ResponseEntity<List<UserResponse>>> createBulk(
+            @Valid @RequestBody BulkCreateUsersRequest request
+    ) {
+        return userService.createBulk(request.users())
+                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @DeleteMapping("/data")
+    public Mono<ResponseEntity<Void>> clearAllData() {
+        return userService.clearAllData().thenReturn(ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

@@ -13,6 +13,8 @@ import ifmo.poster.order.entity.Ticket;
 import ifmo.poster.order.mapper.OrderMapper;
 import ifmo.poster.order.dto.OrderResponse;
 import ifmo.poster.order.repository.OrderRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +32,18 @@ public class OrderPersistenceService {
 
     private final OrderRepository orderRepository;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public OrderPersistenceService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
+    }
+
+    @Transactional
+    public void clearAllData() {
+        entityManager.createNativeQuery(
+                "TRUNCATE TABLE tickets, order_items, orders RESTART IDENTITY CASCADE"
+        ).executeUpdate();
     }
 
     @Transactional

@@ -1,6 +1,7 @@
 package ifmo.poster.order.controller;
 
 import ifmo.poster.contracts.support.Pagination;
+import ifmo.poster.order.dto.BulkCreateOrdersRequest;
 import ifmo.poster.order.dto.CreateOrderRequest;
 import ifmo.poster.order.dto.OrderResponse;
 import ifmo.poster.order.dto.UpdateOrderStatusRequest;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +37,19 @@ public class OrderController {
     public Mono<ResponseEntity<OrderResponse>> create(@Valid @RequestBody CreateOrderRequest request) {
         return orderService.create(request)
                 .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @PostMapping("/bulk")
+    public Mono<ResponseEntity<List<OrderResponse>>> createBulk(
+            @Valid @RequestBody BulkCreateOrdersRequest request
+    ) {
+        return orderService.createBulk(request.orders())
+                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @DeleteMapping("/data")
+    public Mono<ResponseEntity<Void>> clearAllData() {
+        return orderService.clearAllData().thenReturn(ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

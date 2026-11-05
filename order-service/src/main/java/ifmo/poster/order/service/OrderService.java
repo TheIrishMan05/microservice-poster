@@ -45,6 +45,17 @@ public class OrderService {
                         .onErrorResume(error -> compensate(reservations).then(Mono.error(error))));
     }
 
+    public Mono<List<OrderResponse>> createBulk(List<CreateOrderRequest> requests) {
+        return Flux.fromIterable(requests)
+                .concatMap(this::create)
+                .collectList();
+    }
+
+    public Mono<Void> clearAllData() {
+        return Mono.<Void>fromRunnable(persistenceService::clearAllData)
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
     public Mono<OrderResponse> getById(Long id) {
         return blocking(() -> persistenceService.getById(id));
     }

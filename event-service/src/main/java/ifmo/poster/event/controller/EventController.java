@@ -1,6 +1,7 @@
 package ifmo.poster.event.controller;
 
 import ifmo.poster.contracts.enums.EventStatus;
+import ifmo.poster.event.dto.BulkCreateEventsRequest;
 import ifmo.poster.event.dto.CreateEventRequest;
 import ifmo.poster.event.dto.EventResponse;
 import ifmo.poster.event.dto.UpdateEventRequest;
@@ -35,6 +36,19 @@ public class EventController {
     public Mono<ResponseEntity<EventResponse>> create(@Valid @RequestBody CreateEventRequest request) {
         return eventService.create(request)
                 .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @PostMapping("/bulk")
+    public Mono<ResponseEntity<List<EventResponse>>> createBulk(
+            @Valid @RequestBody BulkCreateEventsRequest request
+    ) {
+        return eventService.createBulk(request.events())
+                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+    }
+
+    @DeleteMapping("/data")
+    public Mono<ResponseEntity<Void>> clearAllData() {
+        return eventService.clearAllData().thenReturn(ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

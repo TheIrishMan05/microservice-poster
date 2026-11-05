@@ -192,4 +192,64 @@ class OrderApiIT {
 
         org.mockito.Mockito.verify(eventClient).cancelReservation(eq(reservationId));
     }
+
+    @Test
+    void bulkCreateOrdersAndClearDatabase() {
+        webTestClient.post()
+                .uri("/api/orders/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "orders", List.of(
+                                Map.of(
+                                        "userId", 1,
+                                        "items", List.of(Map.of(
+                                                "eventId", 10,
+                                                "ticketTypeId", 1,
+                                                "quantity", 1
+                                        ))
+                                ),
+                                Map.of(
+                                        "userId", 1,
+                                        "items", List.of(Map.of(
+                                                "eventId", 10,
+                                                "ticketTypeId", 1,
+                                                "quantity", 2
+                                        ))
+                                )
+                        )
+                ))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(2)
+                .jsonPath("$[0].status").isEqualTo(OrderStatus.PENDING.name())
+                .jsonPath("$[1].items[0].quantity").isEqualTo(2);
+
+        webTestClient.delete()
+                .uri("/api/orders/data")
+                .exchange()
+                .expectStatus().isNoContent();
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/orders")
+                        .queryParam("page", 0)
+                        .queryParam("size", 20)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals("X-Total-Count", "0")
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(0);
+    }
+
+    @Test
+    void rejectsEmptyBulkCreateOrders() {
+        webTestClient.post()
+                .uri("/api/orders/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("orders", List.of()))
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
 }

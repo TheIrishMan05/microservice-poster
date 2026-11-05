@@ -3,6 +3,7 @@ package ifmo.poster.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ifmo.poster.contracts.enums.Role;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,6 +147,62 @@ class UserApiIT {
                 ))
                 .exchange()
                 .expectStatus().isEqualTo(409);
+    }
+
+    @Test
+    void bulkCreateUsersAndClearDatabase() {
+        webTestClient.post()
+                .uri("/api/users/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "users", List.of(
+                                Map.of(
+                                        "userName", "bulk_user_01",
+                                        "email", "bulk1@example.com",
+                                        "role", Role.USER.name()
+                                ),
+                                Map.of(
+                                        "userName", "bulk_user_02",
+                                        "email", "bulk2@example.com",
+                                        "role", Role.ADMIN.name()
+                                )
+                        )
+                ))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(2)
+                .jsonPath("$[0].userName").isEqualTo("bulk_user_01")
+                .jsonPath("$[1].userName").isEqualTo("bulk_user_02");
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/users").queryParam("page", 0).queryParam("size", 50).build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().exists("X-Total-Count");
+
+        webTestClient.delete()
+                .uri("/api/users/data")
+                .exchange()
+                .expectStatus().isNoContent();
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/users").queryParam("page", 0).queryParam("size", 20).build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals("X-Total-Count", "0")
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(0);
+    }
+
+    @Test
+    void rejectsEmptyBulkCreateUsers() {
+        webTestClient.post()
+                .uri("/api/users/bulk")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("users", List.of()))
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @SuppressWarnings("unchecked")

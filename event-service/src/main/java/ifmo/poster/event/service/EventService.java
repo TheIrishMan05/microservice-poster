@@ -16,6 +16,7 @@ import ifmo.poster.event.repository.EventTagRepository;
 import ifmo.poster.event.repository.TagRepository;
 import ifmo.poster.contracts.support.Pagination;
 import java.util.List;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -29,19 +30,22 @@ public class EventService {
     private final TagRepository tagRepository;
     private final TagService tagService;
     private final TransactionalOperator transactionalOperator;
+    private final DatabaseClient databaseClient;
 
     public EventService(
             EventRepository eventRepository,
             EventTagRepository eventTagRepository,
             TagRepository tagRepository,
             TagService tagService,
-            TransactionalOperator transactionalOperator
+            TransactionalOperator transactionalOperator,
+            DatabaseClient databaseClient
     ) {
         this.eventRepository = eventRepository;
         this.eventTagRepository = eventTagRepository;
         this.tagRepository = tagRepository;
         this.tagService = tagService;
         this.transactionalOperator = transactionalOperator;
+        this.databaseClient = databaseClient;
     }
 
     public Mono<EventResponse> create(CreateEventRequest request) {
@@ -49,6 +53,29 @@ public class EventService {
                 .flatMap(saved -> replaceTags(saved.getId(), request.tagNames()).thenReturn(saved))
                 .flatMap(this::toResponse);
         return transactionalOperator.transactional(pipeline);
+    }
+
+    public Mono<List<EventResponse>> createBulk(List<CreateEventRequest> requests) {
+        return Flux.fromIterable(requests)
+                .concatMap(this::create)
+                .collectList();
+    }
+
+    public Mono<Void> clearAllData() {
+        return databaseClient.sql("""
+                        TRUNCATE TABLE
+                            ticket_reservation_holds,
+                            ticket_reservations,
+                            ticket_waitlists,
+                            event_registrations,
+                            seats,
+                            event_tags,
+                            events,
+                            tags,
+                            ticket_types
+                        RESTART IDENTITY CASCADE
+                        """)
+                .then();
     }
 
     public Mono<EventResponse> getById(Long id) {
