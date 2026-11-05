@@ -83,7 +83,8 @@ public class EventService {
     }
 
     public Mono<EventBriefDto> getBriefById(Long id) {
-        return requireEvent(id).map(EventMapper::toBrief);
+        return requireEvent(id)
+                .flatMap(event -> Mono.just(EventMapper.toBrief(event)));
     }
 
     public Mono<List<EventResponse>> findNextBatch(Long afterId, int limit, EventStatus status) {
@@ -133,8 +134,8 @@ public class EventService {
     private Mono<EventResponse> toResponse(Event event) {
         return eventTagRepository.findTagIdsByEventId(event.getId())
                 .concatMap(tagRepository::findById)
-                .map(TagMapper::toResponse)
+                .flatMap(tag -> Mono.just(TagMapper.toResponse(tag)))
                 .collectList()
-                .map(tags -> EventMapper.toResponse(event, tags));
+                .flatMap(tags -> Mono.just(EventMapper.toResponse(event, tags)));
     }
 }

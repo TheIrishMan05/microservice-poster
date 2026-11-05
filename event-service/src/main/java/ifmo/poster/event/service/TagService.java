@@ -28,18 +28,20 @@ public class TagService {
                     if (Boolean.TRUE.equals(exists)) {
                         return Mono.error(new ConflictException("Тег уже существует: " + request.name()));
                     }
-                    return tagRepository.save(TagMapper.toEntity(request)).map(TagMapper::toResponse);
+                    return tagRepository.save(TagMapper.toEntity(request))
+                            .flatMap(saved -> Mono.just(TagMapper.toResponse(saved)));
                 });
     }
 
     public Mono<TagResponse> getById(Long id) {
-        return requireTag(id).map(TagMapper::toResponse);
+        return requireTag(id)
+                .flatMap(tag -> Mono.just(TagMapper.toResponse(tag)));
     }
 
     public Mono<List<TagResponse>> findAll(int page, int size) {
         long offset = Pagination.offset(page, size);
         return tagRepository.findAllPaged(size, offset)
-                .map(TagMapper::toResponse)
+                .flatMap(tag -> Mono.just(TagMapper.toResponse(tag)))
                 .collectList();
     }
 
@@ -57,7 +59,7 @@ public class TagService {
                     TagMapper.updateEntity(tag, request);
                     return tagRepository.save(tag);
                 })
-                .map(TagMapper::toResponse);
+                .flatMap(saved -> Mono.just(TagMapper.toResponse(saved)));
     }
 
     public Mono<Void> delete(Long id) {

@@ -31,18 +31,19 @@ public class TicketTypeService {
                         ));
                     }
                     return ticketTypeRepository.save(TicketTypeMapper.toEntity(request))
-                            .map(TicketTypeMapper::toResponse);
+                            .flatMap(saved -> Mono.just(TicketTypeMapper.toResponse(saved)));
                 });
     }
 
     public Mono<TicketTypeResponse> getById(Long id) {
-        return requireTicketType(id).map(TicketTypeMapper::toResponse);
+        return requireTicketType(id)
+                .flatMap(ticketType -> Mono.just(TicketTypeMapper.toResponse(ticketType)));
     }
 
     public Mono<List<TicketTypeResponse>> findAll(int page, int size) {
         long offset = Pagination.offset(page, size);
         return ticketTypeRepository.findAllPaged(size, offset)
-                .map(TicketTypeMapper::toResponse)
+                .flatMap(ticketType -> Mono.just(TicketTypeMapper.toResponse(ticketType)))
                 .collectList();
     }
 
@@ -62,7 +63,7 @@ public class TicketTypeService {
                     TicketTypeMapper.updateEntity(ticketType, request);
                     return ticketTypeRepository.save(ticketType);
                 })
-                .map(TicketTypeMapper::toResponse);
+                .flatMap(saved -> Mono.just(TicketTypeMapper.toResponse(saved)));
     }
 
     public Mono<Void> delete(Long id) {

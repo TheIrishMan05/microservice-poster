@@ -33,12 +33,13 @@ public class TagController {
     @PostMapping
     public Mono<ResponseEntity<TagResponse>> create(@Valid @RequestBody CreateTagRequest request) {
         return tagService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<TagResponse>> getById(@PathVariable Long id) {
-        return tagService.getById(id).map(ResponseEntity::ok);
+        return tagService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -46,7 +47,8 @@ public class TagController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
-        return tagService.findAll(page, size).map(ResponseEntity::ok);
+        return tagService.findAll(page, size)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @PutMapping("/{id}")
@@ -54,11 +56,13 @@ public class TagController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateTagRequest request
     ) {
-        return tagService.update(id, request).map(ResponseEntity::ok);
+        return tagService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return tagService.delete(id).thenReturn(ResponseEntity.noContent().build());
+        return tagService.delete(id)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

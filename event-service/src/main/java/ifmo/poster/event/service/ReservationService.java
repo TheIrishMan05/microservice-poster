@@ -96,30 +96,33 @@ public class ReservationService {
         return reservationRepository.save(reservation)
                 .flatMap(saved -> bindAvailableSeats(saved, publicId, quantity)
                         .then(createHolds(saved.getId(), quantity))
-                        .map(holdIds -> new TicketReservationDto(
+                        .flatMap(holdIds -> Mono.just(new TicketReservationDto(
                                 publicId,
                                 eventId,
                                 ticketType.getId(),
                                 quantity,
                                 ticketType.getPrice(),
                                 holdIds
-                        )));
+                        ))));
     }
 
     private Mono<Void> bindAvailableSeats(TicketReservation reservation, String publicId, int quantity) {
         return seatRepository.findAvailableForUpdate(reservation.getEventId(), reservation.getTicketTypeId(), quantity)
                 .collectList()
-                .flatMapMany(seats -> {
+                .flatMap(seats -> {
                     if (seats.size() < quantity) {
-                        return Flux.fromIterable(seats);
+                        return Mono.error(new ConflictException(
+                                "Недостаточно свободных мест: нужно=" + quantity
+                                        + ", доступно=" + seats.size()
+                        ));
                     }
-                    return Flux.fromIterable(seats);
-                })
-                .concatMap(seat -> {
-                    seat.setReservationId(publicId);
-                    return seatRepository.save(seat);
-                })
-                .then();
+                    return Flux.fromIterable(seats)
+                            .concatMap(seat -> {
+                                seat.setReservationId(publicId);
+                                return seatRepository.save(seat);
+                            })
+                            .then();
+                });
     }
 
     private Mono<List<Long>> createHolds(Long reservationId, int quantity) {

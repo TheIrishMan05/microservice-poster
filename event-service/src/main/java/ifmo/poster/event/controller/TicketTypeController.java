@@ -35,12 +35,13 @@ public class TicketTypeController {
             @Valid @RequestBody CreateTicketTypeRequest request
     ) {
         return ticketTypeService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<TicketTypeResponse>> getById(@PathVariable Long id) {
-        return ticketTypeService.getById(id).map(ResponseEntity::ok);
+        return ticketTypeService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -48,7 +49,8 @@ public class TicketTypeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
-        return ticketTypeService.findAll(page, size).map(ResponseEntity::ok);
+        return ticketTypeService.findAll(page, size)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @PutMapping("/{id}")
@@ -56,11 +58,13 @@ public class TicketTypeController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateTicketTypeRequest request
     ) {
-        return ticketTypeService.update(id, request).map(ResponseEntity::ok);
+        return ticketTypeService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return ticketTypeService.delete(id).thenReturn(ResponseEntity.noContent().build());
+        return ticketTypeService.delete(id)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

@@ -30,7 +30,8 @@ public class InternalEventController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<EventBriefDto>> getById(@PathVariable Long id) {
-        return eventService.getBriefById(id).map(ResponseEntity::ok);
+        return eventService.getBriefById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @PostMapping("/reservations")
@@ -38,12 +39,12 @@ public class InternalEventController {
             @RequestBody ReserveTicketsRequest request
     ) {
         return reservationService.reserve(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @DeleteMapping("/reservations/{reservationId}")
     public Mono<ResponseEntity<Void>> cancelReservation(@PathVariable String reservationId) {
         return reservationService.cancel(reservationId)
-                .thenReturn(ResponseEntity.noContent().build());
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

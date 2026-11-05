@@ -33,12 +33,13 @@ public class WaitlistController {
     @PostMapping
     public Mono<ResponseEntity<WaitlistResponse>> create(@Valid @RequestBody CreateWaitlistRequest request) {
         return waitlistService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<WaitlistResponse>> getById(@PathVariable Long id) {
-        return waitlistService.getById(id).map(ResponseEntity::ok);
+        return waitlistService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -49,10 +50,10 @@ public class WaitlistController {
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
         return waitlistService.findAll(eventId, userId, page, size)
-                .map(tuple -> {
+                .flatMap(tuple -> {
                     HttpHeaders headers = new HttpHeaders();
                     headers.add(Pagination.TOTAL_COUNT_HEADER, String.valueOf(tuple.getT2()));
-                    return ResponseEntity.ok().headers(headers).body(tuple.getT1());
+                    return Mono.just(ResponseEntity.ok().headers(headers).body(tuple.getT1()));
                 });
     }
 
@@ -61,11 +62,13 @@ public class WaitlistController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateWaitlistRequest request
     ) {
-        return waitlistService.update(id, request).map(ResponseEntity::ok);
+        return waitlistService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return waitlistService.delete(id).thenReturn(ResponseEntity.noContent().build());
+        return waitlistService.delete(id)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

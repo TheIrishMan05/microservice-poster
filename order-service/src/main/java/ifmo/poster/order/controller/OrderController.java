@@ -36,7 +36,7 @@ public class OrderController {
     @PostMapping
     public Mono<ResponseEntity<OrderResponse>> create(@Valid @RequestBody CreateOrderRequest request) {
         return orderService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @PostMapping("/bulk")
@@ -44,17 +44,19 @@ public class OrderController {
             @Valid @RequestBody BulkCreateOrdersRequest request
     ) {
         return orderService.createBulk(request.orders())
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @DeleteMapping("/data")
     public Mono<ResponseEntity<Void>> clearAllData() {
-        return orderService.clearAllData().thenReturn(ResponseEntity.noContent().build());
+        return orderService.clearAllData()
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<OrderResponse>> getById(@PathVariable Long id) {
-        return orderService.getById(id).map(ResponseEntity::ok);
+        return orderService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -63,7 +65,8 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
-        return orderService.findAll(userId, page, size).map(this::toPagedResponse);
+        return orderService.findAll(userId, page, size)
+                .flatMap(result -> Mono.just(toPagedResponse(result)));
     }
 
     @PutMapping("/{id}/status")
@@ -71,7 +74,8 @@ public class OrderController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateOrderStatusRequest request
     ) {
-        return orderService.updateStatus(id, request).map(ResponseEntity::ok);
+        return orderService.updateStatus(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     private ResponseEntity<List<OrderResponse>> toPagedResponse(Page<OrderResponse> pageResult) {

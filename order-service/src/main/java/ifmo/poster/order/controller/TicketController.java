@@ -27,7 +27,8 @@ public class TicketController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<TicketResponse>> getById(@PathVariable Long id) {
-        return ticketService.getById(id).map(ResponseEntity::ok);
+        return ticketService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -37,7 +38,8 @@ public class TicketController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
-        return ticketService.findAll(eventId, status, page, size).map(this::toPagedResponse);
+        return ticketService.findAll(eventId, status, page, size)
+                .flatMap(result -> Mono.just(toPagedResponse(result)));
     }
 
     private ResponseEntity<List<TicketResponse>> toPagedResponse(Page<TicketResponse> pageResult) {

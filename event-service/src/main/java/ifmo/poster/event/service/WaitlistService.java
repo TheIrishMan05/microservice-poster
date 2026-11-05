@@ -49,19 +49,20 @@ public class WaitlistService {
                         "Активная запись waitlist уже существует"
                 )))
                 .switchIfEmpty(Mono.defer(() -> waitlistRepository.save(WaitlistMapper.toEntity(request))))
-                .map(WaitlistMapper::toResponse);
+                .flatMap(saved -> Mono.just(WaitlistMapper.toResponse(saved)));
         return transactionalOperator.transactional(pipeline);
     }
 
     public Mono<WaitlistResponse> getById(Long id) {
-        return requireWaitlist(id).map(WaitlistMapper::toResponse);
+        return requireWaitlist(id)
+                .flatMap(waitlist -> Mono.just(WaitlistMapper.toResponse(waitlist)));
     }
 
     public Mono<Tuple2<List<WaitlistResponse>, Long>> findAll(Long eventId, Long userId, int page, int size) {
         long offset = Pagination.offset(page, size);
         Mono<List<WaitlistResponse>> items = waitlistRepository
                 .findFilteredPaged(eventId, userId, size, offset)
-                .map(WaitlistMapper::toResponse)
+                .flatMap(waitlist -> Mono.just(WaitlistMapper.toResponse(waitlist)))
                 .collectList();
         Mono<Long> total = waitlistRepository.countFiltered(eventId, userId);
         return Mono.zip(items, total);
@@ -73,7 +74,7 @@ public class WaitlistService {
                     WaitlistMapper.updateEntity(waitlist, request);
                     return waitlistRepository.save(waitlist);
                 })
-                .map(WaitlistMapper::toResponse);
+                .flatMap(saved -> Mono.just(WaitlistMapper.toResponse(saved)));
     }
 
     public Mono<Void> delete(Long id) {

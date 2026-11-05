@@ -21,6 +21,7 @@ public class InternalUserController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserDto>> getById(@PathVariable Long id) {
-        return userService.getContractById(id).map(ResponseEntity::ok);
+        return userService.getContractById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 }

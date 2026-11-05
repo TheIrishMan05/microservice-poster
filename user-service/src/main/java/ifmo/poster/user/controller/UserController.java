@@ -36,7 +36,7 @@ public class UserController {
     @PostMapping
     public Mono<ResponseEntity<UserResponse>> create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @PostMapping("/bulk")
@@ -44,17 +44,19 @@ public class UserController {
             @Valid @RequestBody BulkCreateUsersRequest request
     ) {
         return userService.createBulk(request.users())
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @DeleteMapping("/data")
     public Mono<ResponseEntity<Void>> clearAllData() {
-        return userService.clearAllData().thenReturn(ResponseEntity.noContent().build());
+        return userService.clearAllData()
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserResponse>> getById(@PathVariable Long id) {
-        return userService.getById(id).map(ResponseEntity::ok);
+        return userService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -62,7 +64,8 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
-        return userService.findAll(page, size).map(this::toPagedResponse);
+        return userService.findAll(page, size)
+                .flatMap(result -> Mono.just(toPagedResponse(result)));
     }
 
     @PutMapping("/{id}")
@@ -70,13 +73,14 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request
     ) {
-        return userService.update(id, request).map(ResponseEntity::ok);
+        return userService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
         return userService.delete(id)
-                .thenReturn(ResponseEntity.noContent().build());
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     private ResponseEntity<List<UserResponse>> toPagedResponse(Page<UserResponse> page) {

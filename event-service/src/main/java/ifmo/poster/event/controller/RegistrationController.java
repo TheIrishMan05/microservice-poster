@@ -35,12 +35,13 @@ public class RegistrationController {
             @Valid @RequestBody CreateRegistrationRequest request
     ) {
         return registrationService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<RegistrationResponse>> getById(@PathVariable Long id) {
-        return registrationService.getById(id).map(ResponseEntity::ok);
+        return registrationService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -51,10 +52,10 @@ public class RegistrationController {
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
         return registrationService.findAll(eventId, userId, page, size)
-                .map(tuple -> {
+                .flatMap(tuple -> {
                     HttpHeaders headers = new HttpHeaders();
                     headers.add(Pagination.TOTAL_COUNT_HEADER, String.valueOf(tuple.getT2()));
-                    return ResponseEntity.ok().headers(headers).body(tuple.getT1());
+                    return Mono.just(ResponseEntity.ok().headers(headers).body(tuple.getT1()));
                 });
     }
 
@@ -63,11 +64,13 @@ public class RegistrationController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateRegistrationRequest request
     ) {
-        return registrationService.update(id, request).map(ResponseEntity::ok);
+        return registrationService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return registrationService.delete(id).thenReturn(ResponseEntity.noContent().build());
+        return registrationService.delete(id)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

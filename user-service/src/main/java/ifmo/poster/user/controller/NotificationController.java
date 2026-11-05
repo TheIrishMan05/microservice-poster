@@ -36,12 +36,13 @@ public class NotificationController {
             @Valid @RequestBody CreateNotificationRequest request
     ) {
         return notificationService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<NotificationResponse>> getById(@PathVariable Long id) {
-        return notificationService.getById(id).map(ResponseEntity::ok);
+        return notificationService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @GetMapping
@@ -51,7 +52,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int size
     ) {
         return notificationService.findAll(userId, page, size)
-                .map(this::toPagedResponse);
+                .flatMap(result -> Mono.just(toPagedResponse(result)));
     }
 
     @PutMapping("/{id}")
@@ -59,13 +60,14 @@ public class NotificationController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateNotificationRequest request
     ) {
-        return notificationService.update(id, request).map(ResponseEntity::ok);
+        return notificationService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
         return notificationService.delete(id)
-                .thenReturn(ResponseEntity.noContent().build());
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     private ResponseEntity<List<NotificationResponse>> toPagedResponse(Page<NotificationResponse> page) {

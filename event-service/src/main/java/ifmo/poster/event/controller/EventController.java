@@ -35,7 +35,7 @@ public class EventController {
     @PostMapping
     public Mono<ResponseEntity<EventResponse>> create(@Valid @RequestBody CreateEventRequest request) {
         return eventService.create(request)
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @PostMapping("/bulk")
@@ -43,17 +43,19 @@ public class EventController {
             @Valid @RequestBody BulkCreateEventsRequest request
     ) {
         return eventService.createBulk(request.events())
-                .map(body -> ResponseEntity.status(HttpStatus.CREATED).body(body));
+                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
     }
 
     @DeleteMapping("/data")
     public Mono<ResponseEntity<Void>> clearAllData() {
-        return eventService.clearAllData().thenReturn(ResponseEntity.noContent().build());
+        return eventService.clearAllData()
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<EventResponse>> getById(@PathVariable Long id) {
-        return eventService.getById(id).map(ResponseEntity::ok);
+        return eventService.getById(id)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     /**
@@ -65,7 +67,8 @@ public class EventController {
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int limit,
             @RequestParam(required = false) EventStatus status
     ) {
-        return eventService.findNextBatch(afterId, limit, status).map(ResponseEntity::ok);
+        return eventService.findNextBatch(afterId, limit, status)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @PutMapping("/{id}")
@@ -73,11 +76,13 @@ public class EventController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateEventRequest request
     ) {
-        return eventService.update(id, request).map(ResponseEntity::ok);
+        return eventService.update(id, request)
+                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
     }
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return eventService.delete(id).thenReturn(ResponseEntity.noContent().build());
+        return eventService.delete(id)
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 }

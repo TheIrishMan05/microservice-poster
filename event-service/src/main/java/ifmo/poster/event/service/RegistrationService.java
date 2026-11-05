@@ -44,19 +44,20 @@ public class RegistrationService {
                     }
                     return registrationRepository.save(RegistrationMapper.toEntity(request));
                 })
-                .map(RegistrationMapper::toResponse);
+                .flatMap(saved -> Mono.just(RegistrationMapper.toResponse(saved)));
         return transactionalOperator.transactional(pipeline);
     }
 
     public Mono<RegistrationResponse> getById(Long id) {
-        return requireRegistration(id).map(RegistrationMapper::toResponse);
+        return requireRegistration(id)
+                .flatMap(registration -> Mono.just(RegistrationMapper.toResponse(registration)));
     }
 
     public Mono<Tuple2<List<RegistrationResponse>, Long>> findAll(Long eventId, Long userId, int page, int size) {
         long offset = Pagination.offset(page, size);
         Mono<List<RegistrationResponse>> items = registrationRepository
                 .findFilteredPaged(eventId, userId, size, offset)
-                .map(RegistrationMapper::toResponse)
+                .flatMap(registration -> Mono.just(RegistrationMapper.toResponse(registration)))
                 .collectList();
         Mono<Long> total = registrationRepository.countFiltered(eventId, userId);
         return Mono.zip(items, total);
@@ -68,7 +69,7 @@ public class RegistrationService {
                     RegistrationMapper.updateEntity(registration, request);
                     return registrationRepository.save(registration);
                 })
-                .map(RegistrationMapper::toResponse);
+                .flatMap(saved -> Mono.just(RegistrationMapper.toResponse(saved)));
     }
 
     public Mono<Void> delete(Long id) {
