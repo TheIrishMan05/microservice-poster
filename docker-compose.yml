@@ -1,5 +1,5 @@
 services:
-
+  
   postgres-user:
     image: postgres:15-alpine
     container_name: db-user
@@ -17,6 +17,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    networks:
+      - poster-net
 
   postgres-event:
     image: postgres:15-alpine
@@ -35,6 +37,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    networks:
+      - poster-net
 
   postgres-order:
     image: postgres:15-alpine
@@ -53,7 +57,9 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
-
+    networks:
+      - poster-net
+  
   eureka-server:
     build:
       context: .
@@ -70,6 +76,8 @@ services:
       retries: 12
       start_period: 40s
     restart: on-failure
+    networks:
+      - poster-net
 
   config-server:
     build:
@@ -81,7 +89,6 @@ services:
     environment:
       JAVA_OPTS: "-Xmx256m"
     volumes:
-      # нужен: jar ждёт конфиги по file:///app/config-repo
       - ./config-repo:/app/config-repo:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
@@ -90,6 +97,8 @@ services:
       retries: 12
       start_period: 40s
     restart: on-failure
+    networks:
+      - poster-net
 
   api-gateway:
     build:
@@ -112,14 +121,16 @@ services:
       retries: 12
       start_period: 60s
     restart: on-failure
+    networks:
+      - poster-net
 
   user-service:
     build:
       context: .
       dockerfile: user-service/Dockerfile
     container_name: user-service
-    ports:
-      - "${USER_SERVICE_PORT}:8081"
+    expose:
+      - "8081"
     environment:
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
@@ -138,14 +149,16 @@ services:
       retries: 12
       start_period: 90s
     restart: on-failure
+    networks:
+      - poster-net
 
   event-service:
     build:
       context: .
       dockerfile: event-service/Dockerfile
     container_name: event-service
-    ports:
-      - "${EVENT_SERVICE_PORT}:8082"
+    expose:
+      - "8082"
     environment:
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
@@ -164,14 +177,16 @@ services:
       retries: 12
       start_period: 90s
     restart: on-failure
+    networks:
+      - poster-net
 
   order-service:
     build:
       context: .
       dockerfile: order-service/Dockerfile
     container_name: order-service
-    ports:
-      - "${ORDER_SERVICE_PORT}:8083"
+    expose:
+      - "8083"
     environment:
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
@@ -194,6 +209,12 @@ services:
       retries: 12
       start_period: 90s
     restart: on-failure
+    networks:
+      - poster-net
+
+networks:
+  poster-net:
+    driver: bridge
 
 volumes:
   pgdata-user:

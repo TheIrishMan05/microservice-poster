@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: api-gateway
+  
+  config:
+    import: configserver:http://config-server:8888
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
