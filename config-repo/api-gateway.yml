@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          
+          routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/**,/api/notifications/**
+
+            - id: event-service
+              uri: lb://event-service
+              predicates:
+                - Path=/api/events/**,/api/registrations/**,/api/ticket-types/**,/api/ticket-waitlist/**,/api/tags/**
+
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/orders/**,/api/tickets/**
+
+            - id: user-service-api-docs
+              uri: lb://user-service
+              predicates:
+                - Path=/v3/api-docs/user-service
+              filters:
+                - RewritePath=/v3/api-docs/user-service,/v3/api-docs
+
+            - id: event-service-api-docs
+              uri: lb://event-service
+              predicates:
+                - Path=/v3/api-docs/event-service
+              filters:
+                - RewritePath=/v3/api-docs/event-service,/v3/api-docs
+
+            - id: order-service-api-docs
+              uri: lb://order-service
+              predicates:
+                - Path=/v3/api-docs/order-service
+              filters:
+                - RewritePath=/v3/api-docs/order-service,/v3/api-docs
+
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOriginPatterns: "*"
+                allowedMethods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+                allowedHeaders: "*"
+                exposedHeaders: X-Total-Count,X-Request-Id
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls-primary-name: user-service
+    urls:
+      - name: user-service
+        url: /v3/api-docs/user-service
+      - name: event-service
+        url: /v3/api-docs/event-service
+      - name: order-service
+        url: /v3/api-docs/order-service

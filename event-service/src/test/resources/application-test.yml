@@ -1,0 +1,15 @@
+spring:
+  config:
+    import: ""
+  
+  r2dbc:
+    url: r2dbc:pool:h2:mem:///testdb?options=DB_CLOSE_DELAY=-1 
+    username: sa
+    password: 
+
+  liquibase:
+    enabled: false
+
+eureka:
+  client:
+    enabled: false
