@@ -14,8 +14,14 @@ import ifmo.poster.event.mapper.TagMapper;
 import ifmo.poster.event.repository.EventRepository;
 import ifmo.poster.event.repository.EventTagRepository;
 import ifmo.poster.event.repository.TagRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import ifmo.poster.contracts.support.Pagination;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -31,6 +37,7 @@ public class EventService {
     private final TagService tagService;
     private final TransactionalOperator transactionalOperator;
     private final DatabaseClient databaseClient;
+    private final Validator validator;
 
     public EventService(
             EventRepository eventRepository,
@@ -38,7 +45,8 @@ public class EventService {
             TagRepository tagRepository,
             TagService tagService,
             TransactionalOperator transactionalOperator,
-            DatabaseClient databaseClient
+            DatabaseClient databaseClient,
+            Validator validator
     ) {
         this.eventRepository = eventRepository;
         this.eventTagRepository = eventTagRepository;
@@ -46,10 +54,13 @@ public class EventService {
         this.tagService = tagService;
         this.transactionalOperator = transactionalOperator;
         this.databaseClient = databaseClient;
+        this.validator = validator;
     }
 
     public Mono<EventResponse> create(CreateEventRequest request) {
-        Mono<EventResponse> pipeline = eventRepository.save(EventMapper.toEntity(request))
+        Event event = EventMapper.toEntity(request);
+        validateOrThrow(event);
+        Mono<EventResponse> pipeline = eventRepository.save(event)
                 .flatMap(saved -> replaceTags(saved.getId(), request.tagNames()).thenReturn(saved))
                 .flatMap(this::toResponse);
         return transactionalOperator.transactional(pipeline);
@@ -100,6 +111,7 @@ public class EventService {
         Mono<EventResponse> pipeline = requireEvent(id)
                 .flatMap(event -> {
                     EventMapper.updateEntity(event, request);
+                    validateOrThrow(event);
                     return eventRepository.save(event);
                 })
                 .flatMap(saved -> replaceTags(saved.getId(), request.tagNames()).thenReturn(saved))
@@ -137,5 +149,15 @@ public class EventService {
                 .flatMap(tag -> Mono.just(TagMapper.toResponse(tag)))
                 .collectList()
                 .flatMap(tags -> Mono.just(EventMapper.toResponse(event, tags)));
+    }
+
+    private void validateOrThrow(Object obj){
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        if(!violations.isEmpty()){
+            String message = violations.stream()
+                        .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                        .collect(Collectors.joining("; "));
+            throw new ConstraintViolationException(message, violations);
+        }
     }
 }

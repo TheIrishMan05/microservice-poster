@@ -1,25 +1,33 @@
 package ifmo.poster.event.service;
 
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.support.Pagination;
 import ifmo.poster.event.dto.CreateTagRequest;
 import ifmo.poster.event.dto.TagResponse;
 import ifmo.poster.event.dto.UpdateTagRequest;
 import ifmo.poster.event.entity.Tag;
-import ifmo.poster.contracts.exception.ConflictException;
-import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.mapper.TagMapper;
 import ifmo.poster.event.repository.TagRepository;
-import ifmo.poster.contracts.support.Pagination;
-import java.util.List;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TagService {
 
     private final TagRepository tagRepository;
+    private final Validator validator;
 
-    public TagService(TagRepository tagRepository) {
+    public TagService(TagRepository tagRepository, Validator validator) {
         this.tagRepository = tagRepository;
+        this.validator = validator;
     }
 
     public Mono<TagResponse> create(CreateTagRequest request) {
@@ -28,7 +36,11 @@ public class TagService {
                     if (Boolean.TRUE.equals(exists)) {
                         return Mono.error(new ConflictException("Тег уже существует: " + request.name()));
                     }
-                    return tagRepository.save(TagMapper.toEntity(request))
+                    
+                    Tag entity = TagMapper.toEntity(request);
+                    validateOrThrow(entity); // Валидация перед сохранением
+                    
+                    return tagRepository.save(entity)
                             .flatMap(saved -> Mono.just(TagMapper.toResponse(saved)));
                 });
     }
@@ -57,6 +69,8 @@ public class TagService {
                         .switchIfEmpty(Mono.just(tag)))
                 .flatMap(tag -> {
                     TagMapper.updateEntity(tag, request);
+                    validateOrThrow(tag); 
+                    
                     return tagRepository.save(tag);
                 })
                 .flatMap(saved -> Mono.just(TagMapper.toResponse(saved)));
@@ -77,7 +91,19 @@ public class TagService {
                 .switchIfEmpty(Mono.defer(() -> {
                     Tag tag = new Tag();
                     tag.setName(normalized);
+                    validateOrThrow(tag); 
+                    
                     return tagRepository.save(tag);
                 }));
+    }
+
+    private void validateOrThrow(Object obj) {
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new ConstraintViolationException(message, violations);
+        }
     }
 }

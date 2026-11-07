@@ -1,25 +1,33 @@
 package ifmo.poster.event.service;
 
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.support.Pagination;
 import ifmo.poster.event.dto.CreateTicketTypeRequest;
 import ifmo.poster.event.dto.TicketTypeResponse;
 import ifmo.poster.event.dto.UpdateTicketTypeRequest;
 import ifmo.poster.event.entity.TicketType;
-import ifmo.poster.contracts.exception.ConflictException;
-import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.mapper.TicketTypeMapper;
 import ifmo.poster.event.repository.TicketTypeRepository;
-import ifmo.poster.contracts.support.Pagination;
-import java.util.List;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
+    private final Validator validator; 
 
-    public TicketTypeService(TicketTypeRepository ticketTypeRepository) {
+    public TicketTypeService(TicketTypeRepository ticketTypeRepository, Validator validator) {
         this.ticketTypeRepository = ticketTypeRepository;
+        this.validator = validator;
     }
 
     public Mono<TicketTypeResponse> create(CreateTicketTypeRequest request) {
@@ -30,7 +38,11 @@ public class TicketTypeService {
                                 "Тип билета уже существует: " + request.typeName()
                         ));
                     }
-                    return ticketTypeRepository.save(TicketTypeMapper.toEntity(request))
+                    
+                    TicketType entity = TicketTypeMapper.toEntity(request);
+                    validateOrThrow(entity);
+                    
+                    return ticketTypeRepository.save(entity)
                             .flatMap(saved -> Mono.just(TicketTypeMapper.toResponse(saved)));
                 });
     }
@@ -61,6 +73,8 @@ public class TicketTypeService {
                         .switchIfEmpty(Mono.just(ticketType)))
                 .flatMap(ticketType -> {
                     TicketTypeMapper.updateEntity(ticketType, request);
+                    validateOrThrow(ticketType);
+                    
                     return ticketTypeRepository.save(ticketType);
                 })
                 .flatMap(saved -> Mono.just(TicketTypeMapper.toResponse(saved)));
@@ -73,5 +87,15 @@ public class TicketTypeService {
     Mono<TicketType> requireTicketType(Long id) {
         return ticketTypeRepository.findById(id)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Тип билета не найден: id=" + id)));
+    }
+
+    private void validateOrThrow(Object obj) {
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new ConstraintViolationException(message, violations);
+        }
     }
 }

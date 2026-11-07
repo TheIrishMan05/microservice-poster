@@ -3,20 +3,26 @@ package ifmo.poster.event.service;
 import ifmo.poster.contracts.enums.EventStatus;
 import ifmo.poster.contracts.event.ReserveTicketsRequest;
 import ifmo.poster.contracts.event.TicketReservationDto;
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.entity.TicketReservation;
 import ifmo.poster.event.entity.TicketReservationHold;
 import ifmo.poster.event.entity.TicketType;
-import ifmo.poster.contracts.exception.ConflictException;
-import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.repository.SeatRepository;
 import ifmo.poster.event.repository.TicketReservationHoldRepository;
 import ifmo.poster.event.repository.TicketReservationRepository;
-import java.util.List;
-import java.util.UUID;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
@@ -27,6 +33,7 @@ public class ReservationService {
     private final TicketReservationHoldRepository holdRepository;
     private final SeatRepository seatRepository;
     private final TransactionalOperator transactionalOperator;
+    private final Validator validator; 
 
     public ReservationService(
             EventService eventService,
@@ -34,7 +41,8 @@ public class ReservationService {
             TicketReservationRepository reservationRepository,
             TicketReservationHoldRepository holdRepository,
             SeatRepository seatRepository,
-            TransactionalOperator transactionalOperator
+            TransactionalOperator transactionalOperator,
+            Validator validator
     ) {
         this.eventService = eventService;
         this.ticketTypeService = ticketTypeService;
@@ -42,13 +50,14 @@ public class ReservationService {
         this.holdRepository = holdRepository;
         this.seatRepository = seatRepository;
         this.transactionalOperator = transactionalOperator;
+        this.validator = validator;
     }
 
     public Mono<TicketReservationDto> reserve(ReserveTicketsRequest request) {
         if (request.quantity() < 1 || request.quantity() > 50) {
             return Mono.error(new IllegalArgumentException("quantity должен быть от 1 до 50"));
         }
-
+        
         Mono<TicketReservationDto> pipeline = eventService.requireEvent(request.eventId())
                 .flatMap(event -> {
                     if (event.getStatus() != EventStatus.ACTIVE) {
@@ -59,6 +68,7 @@ public class ReservationService {
                     return ticketTypeService.requireTicketType(request.ticketTypeId())
                             .flatMap(ticketType -> createReservation(event.getId(), ticketType, request.quantity()));
                 });
+                
         return transactionalOperator.transactional(pipeline);
     }
 
@@ -72,6 +82,8 @@ public class ReservationService {
                         return Mono.empty();
                     }
                     reservation.setStatus("CANCELLED");
+                    validateOrThrow(reservation);
+                    
                     return reservationRepository.save(reservation)
                             .thenMany(seatRepository.findByReservationId(reservationId))
                             .concatMap(seat -> {
@@ -92,7 +104,9 @@ public class ReservationService {
                 quantity,
                 ticketType.getPrice()
         );
-
+        
+        validateOrThrow(reservation); 
+        
         return reservationRepository.save(reservation)
                 .flatMap(saved -> bindAvailableSeats(saved, publicId, quantity)
                         .then(createHolds(saved.getId(), quantity))
@@ -127,8 +141,23 @@ public class ReservationService {
 
     private Mono<List<Long>> createHolds(Long reservationId, int quantity) {
         return Flux.range(0, quantity)
-                .concatMap(ignored -> holdRepository.save(new TicketReservationHold(reservationId)))
+                .concatMap(ignored -> {
+                    TicketReservationHold hold = new TicketReservationHold(reservationId);
+                    validateOrThrow(hold); 
+                    
+                    return holdRepository.save(hold);
+                })
                 .map(TicketReservationHold::getId)
                 .collectList();
+    }
+
+    private void validateOrThrow(Object obj) {
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new ConstraintViolationException(message, violations);
+        }
     }
 }

@@ -7,8 +7,8 @@ services:
       POSTGRES_DB: user_db
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    expose:
-      - "5432" 
+    ports:
+      - "${DB_USER_PORT}:5432"
     volumes:
       - pgdata-user:/var/lib/postgresql/data
     healthcheck:
@@ -27,8 +27,8 @@ services:
       POSTGRES_DB: event_db
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    expose:
-      - "5432"
+    ports:
+      - "${DB_EVENT_PORT}:5432"
     volumes:
       - pgdata-event:/var/lib/postgresql/data
     healthcheck:
@@ -47,8 +47,8 @@ services:
       POSTGRES_DB: order_db
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    expose:
-      - "5432"
+    ports:
+      - "${DB_ORDER_PORT}:5432"
     volumes:
       - pgdata-order:/var/lib/postgresql/data
     healthcheck:
@@ -132,8 +132,8 @@ services:
     expose:
       - "8081"
     environment:
-      DB_ADMIN: ${DB_ADMIN}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      POSTGRES_USER: ${DB_ADMIN}
+      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-user:
@@ -160,8 +160,8 @@ services:
     expose:
       - "8082"
     environment:
-      DB_ADMIN: ${DB_ADMIN}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      POSTGRES_USER: ${DB_ADMIN}
+      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-event:
@@ -188,8 +188,8 @@ services:
     expose:
       - "8083"
     environment:
-      DB_ADMIN: ${DB_ADMIN}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      POSTGRES_USER: ${DB_ADMIN}
+      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
       postgres-order:

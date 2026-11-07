@@ -1,20 +1,26 @@
 package ifmo.poster.event.service;
 
 import ifmo.poster.contracts.enums.WaitlistStatus;
+import ifmo.poster.contracts.exception.ConflictException;
+import ifmo.poster.contracts.exception.ResourceNotFoundException;
+import ifmo.poster.contracts.support.Pagination;
 import ifmo.poster.event.dto.CreateWaitlistRequest;
 import ifmo.poster.event.dto.UpdateWaitlistRequest;
 import ifmo.poster.event.dto.WaitlistResponse;
 import ifmo.poster.event.entity.TicketWaitlist;
-import ifmo.poster.contracts.exception.ConflictException;
-import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.mapper.WaitlistMapper;
 import ifmo.poster.event.repository.TicketWaitlistRepository;
-import ifmo.poster.contracts.support.Pagination;
-import java.util.List;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class WaitlistService {
@@ -23,17 +29,20 @@ public class WaitlistService {
     private final EventService eventService;
     private final TicketTypeService ticketTypeService;
     private final TransactionalOperator transactionalOperator;
+    private final Validator validator; // Добавлен валидатор
 
     public WaitlistService(
             TicketWaitlistRepository waitlistRepository,
             EventService eventService,
             TicketTypeService ticketTypeService,
-            TransactionalOperator transactionalOperator
+            TransactionalOperator transactionalOperator,
+            Validator validator
     ) {
         this.waitlistRepository = waitlistRepository;
         this.eventService = eventService;
         this.ticketTypeService = ticketTypeService;
         this.transactionalOperator = transactionalOperator;
+        this.validator = validator;
     }
 
     public Mono<WaitlistResponse> create(CreateWaitlistRequest request) {
@@ -48,8 +57,14 @@ public class WaitlistService {
                 .flatMap(existing -> Mono.<TicketWaitlist>error(new ConflictException(
                         "Активная запись waitlist уже существует"
                 )))
-                .switchIfEmpty(Mono.defer(() -> waitlistRepository.save(WaitlistMapper.toEntity(request))))
+                .switchIfEmpty(Mono.defer(() -> {
+                    TicketWaitlist entity = WaitlistMapper.toEntity(request);
+                    validateOrThrow(entity); 
+                    
+                    return waitlistRepository.save(entity);
+                }))
                 .flatMap(saved -> Mono.just(WaitlistMapper.toResponse(saved)));
+        
         return transactionalOperator.transactional(pipeline);
     }
 
@@ -72,6 +87,8 @@ public class WaitlistService {
         return requireWaitlist(id)
                 .flatMap(waitlist -> {
                     WaitlistMapper.updateEntity(waitlist, request);
+                    validateOrThrow(waitlist); 
+                    
                     return waitlistRepository.save(waitlist);
                 })
                 .flatMap(saved -> Mono.just(WaitlistMapper.toResponse(saved)));
@@ -84,5 +101,15 @@ public class WaitlistService {
     private Mono<TicketWaitlist> requireWaitlist(Long id) {
         return waitlistRepository.findById(id)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Запись waitlist не найдена: id=" + id)));
+    }
+
+    private void validateOrThrow(Object obj) {
+        Set<ConstraintViolation<Object>> violations = validator.validate(obj);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new ConstraintViolationException(message, violations);
+        }
     }
 }
