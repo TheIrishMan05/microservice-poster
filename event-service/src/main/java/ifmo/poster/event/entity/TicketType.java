@@ -18,7 +18,6 @@ import lombok.Setter;
 public class TicketType {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("type_name")

@@ -15,10 +15,11 @@ flowchart LR
   OrderSvc --> Config
   OrderSvc -->|"Feign + CB"| UserSvc
   OrderSvc -->|"Feign + CB"| EventSvc
-  UserSvc --> UserDb[("postgres-user")]
-  EventSvc --> EventDb[("postgres-event")]
-  OrderSvc --> OrderDb[("postgres-order")]
+  UserSvc --> Pg[("postgres: user_db / event_db / order_db")]
+  EventSvc --> Pg
+  OrderSvc --> Pg
 ```
+
 
 Перед запуском создайте локальный файл окружения:
 
@@ -42,22 +43,20 @@ docker compose down
 
 ### Порты
 
-| Сервис | URL / порт |
+| Сервис | Доступ с хоста |
 | --- | --- |
-| API Gateway | `http://localhost:8080` |
-| Eureka Dashboard | `http://localhost:8761` |
-| Config Server | `http://localhost:8888` |
-| user-service | `http://localhost:8081` |
-| event-service | `http://localhost:8082` |
-| order-service | `http://localhost:8083` |
-| Postgres (user / event / order) | `5433` / `5434` / `5435` |
+| API Gateway | `http://localhost:8080` — внешняя точка входа для API |
+| Eureka Dashboard | `http://localhost:8761` — список зарегистрированных сервисов |
+| Config Server, postgres, user/event/order | только внутри сети `poster-net` (`expose`) |
 
-`JAVA_OPTS` из `docker-compose.yml` (лимиты heap) применяются через `ENTRYPOINT` в Dockerfiles.  
+Один контейнер `postgres`, логическое разделение — базы `user_db`, `event_db`, `order_db`.  
+У каждого сервиса свой `Dockerfile`: копирует локальный Gradle из `gradle/wrapper/` и собирает свой модуль.
+
+`JAVA_OPTS` из `docker-compose.yml` применяются через `ENTRYPOINT`.  
 Готовность — healthcheck `/actuator/health`, зависимости ждут `service_healthy`.
 
-Отдельная секция `networks:` не объявлена: Compose сам создаёт одну default-сеть проекта, в ней DNS-имена сервисов (`eureka-server`, `postgres-user`, …) резолвятся автоматически. Явная сеть понадобилась бы только для изоляции или external-сети.
-
-Хосты Eureka/Config и JDBC/R2DBC URL уже прописаны в `*/src/main/resources/application.properties` и `config-repo`; в compose для приложений остаются только `JAVA_OPTS` и `POSTGRES_USER`/`POSTGRES_PASSWORD` (подставляются в `${POSTGRES_*}` из config-repo).
+JDBC/R2DBC URL и прочие настройки — в `config-repo/{service}/application.yml`;  
+в compose для приложений передаются `JAVA_OPTS`, `DB_ADMIN`, `ADMIN_PASSWORD`.
 
 ## Маршрутизация через API Gateway
 
@@ -74,17 +73,14 @@ Gateway находит экземпляры сервисов через Eureka. 
 
 ## Внутренние контракты Order Service
 
-`order-service` обращается к другим сервисам через OpenFeign:
+`order-service` ходит к зависимостям через Feign (пути `/internal/**` **не** публикуются на gateway):
 
-- `GET /internal/users/{id}` — получить пользователя;
-- `GET /internal/events/{id}` — получить краткую информацию о мероприятии;
-- `POST /internal/events/reservations` — зарезервировать билеты;
-- `DELETE /internal/events/reservations/{reservationId}` — отменить резерв.
+- OpenFeign → `user-service`: `GET /internal/users/{id}` (блокирующий клиент + `boundedElastic`);
+- Reactive Feign → `event-service`: `GET /internal/events/{id}`, `POST/DELETE .../reservations` (возвращает `Mono`, без `boundedElastic`).
 
-Общие DTO лежат в модуле `shared-contracts`. Feign является блокирующим, поэтому
-его вызовы выполняются на планировщике Reactor `boundedElastic`. Вызовы защищены
-`CircuitBreaker` и `Retry`; при недоступности зависимого сервиса наружу возвращается
-HTTP 503 с понятным описанием ошибки.
+Общие DTO — в `shared-contracts`. Feign **не** генерирует серверные контроллеры:
+на стороне `event-service` / `user-service` нужны обычные `@RestController` (`Internal*`).
+Вызовы защищены `CircuitBreaker` + `Retry`; при недоступности зависимости — HTTP 503.
 
 ## Транзакции при создании/отмене заказа
 
@@ -116,7 +112,7 @@ HTTP 503 с понятным описанием ошибки.
 
 После `docker compose up --build` можно проверить:
 
-- Eureka UI: сервисы зарегистрированы;
+- Eureka UI: сервисы зарегистрированы (`http://localhost:8761`);
 - health: `http://localhost:8080/actuator/health`;
 - Swagger: `http://localhost:8080/swagger-ui.html`.
 

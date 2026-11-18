@@ -10,31 +10,22 @@ import ifmo.poster.user.mapper.NotificationMapper;
 import ifmo.poster.user.repository.NotificationRepository;
 import ifmo.poster.user.repository.UserRepository;
 import ifmo.poster.contracts.support.Pagination;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
-
-    public NotificationService(
-            NotificationRepository notificationRepository,
-            UserRepository userRepository,
-            PlatformTransactionManager transactionManager
-    ) {
-        this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-    }
 
     public Mono<NotificationResponse> create(CreateNotificationRequest request) {
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> {

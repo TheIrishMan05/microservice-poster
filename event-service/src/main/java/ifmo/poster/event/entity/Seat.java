@@ -13,7 +13,6 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Seat {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("ticket_id")

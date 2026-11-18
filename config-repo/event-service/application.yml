@@ -4,9 +4,9 @@ server:
 spring:
   application:
     name: event-service
-  
+
   r2dbc:
-    url: r2dbc:postgresql://postgres-event:5432/event_db
+    url: r2dbc:postgresql://postgres:5432/event_db
     username: ${DB_ADMIN}
     password: ${ADMIN_PASSWORD}
     pool:
@@ -16,9 +16,19 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
-    url: jdbc:postgresql://postgres-event:5432/event_db
+    url: jdbc:postgresql://postgres:5432/event_db
     user: ${DB_ADMIN}
     password: ${ADMIN_PASSWORD}
+
+event:
+  inventory:
+    default-seats-per-ticket-type: 20
+  reservation:
+    min-quantity: 1
+    max-quantity: 50
+
+openapi:
+  server-url: http://localhost:8080
 
 eureka:
   client:

@@ -7,18 +7,16 @@ import ifmo.poster.order.client.UserClient;
 import ifmo.poster.order.exception.ServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@RequiredArgsConstructor
 public class UserClientService {
 
     private final UserClient userClient;
-
-    public UserClientService(UserClient userClient) {
-        this.userClient = userClient;
-    }
 
     @Retry(name = "userService", fallbackMethod = "getByIdFallback")
     @CircuitBreaker(name = "userService", fallbackMethod = "getByIdFallback")

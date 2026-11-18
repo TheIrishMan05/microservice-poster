@@ -21,18 +21,20 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import ifmo.poster.contracts.support.PostgresTestImage;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -41,15 +43,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class OrderApiIT {
 
     @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:15-alpine");
-
-    @DynamicPropertySource
-    static void datasourceProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-    }
+    @ServiceConnection
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
+            DockerImageName.parse(PostgresTestImage.resolve())
+    );
 
     @Autowired
     WebTestClient webTestClient;
@@ -63,24 +60,25 @@ class OrderApiIT {
     @BeforeEach
     void stubDependencies() {
         when(userClient.getById(1L)).thenReturn(new UserDto(1L, "buyer01", "buyer@example.com", Role.USER));
-        when(eventClient.getById(10L)).thenReturn(new EventBriefDto(
+        when(eventClient.getById(10L)).thenReturn(Mono.just(new EventBriefDto(
                 10L,
                 "Show",
                 "Arena",
                 LocalDateTime.now().plusDays(3),
                 EventStatus.ACTIVE
-        ));
+        )));
         when(eventClient.reserve(any(ReserveTicketsRequest.class))).thenAnswer(invocation -> {
             ReserveTicketsRequest request = invocation.getArgument(0);
-            return new TicketReservationDto(
+            return Mono.just(new TicketReservationDto(
                     UUID.randomUUID().toString(),
                     request.eventId(),
                     request.ticketTypeId(),
                     request.quantity(),
                     new BigDecimal("2000.00"),
                     List.of(100L, 101L)
-            );
+            ));
         });
+        when(eventClient.cancelReservation(any())).thenReturn(Mono.empty());
     }
 
     @Test
@@ -152,14 +150,15 @@ class OrderApiIT {
     @Test
     void cancelPendingOrderCompensatesReservation() {
         String reservationId = UUID.randomUUID().toString();
-        when(eventClient.reserve(any(ReserveTicketsRequest.class))).thenReturn(new TicketReservationDto(
+        when(eventClient.reserve(any(ReserveTicketsRequest.class))).thenReturn(Mono.just(new TicketReservationDto(
                 reservationId,
                 10L,
                 1L,
                 1,
                 new BigDecimal("2000.00"),
                 List.of(1L)
-        ));
+        )));
+        when(eventClient.cancelReservation(eq(reservationId))).thenReturn(Mono.empty());
 
         @SuppressWarnings("unchecked")
         Map<String, Object> created = webTestClient.post()

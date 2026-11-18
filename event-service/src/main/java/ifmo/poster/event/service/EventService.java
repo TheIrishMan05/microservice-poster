@@ -8,12 +8,15 @@ import ifmo.poster.event.dto.TagResponse;
 import ifmo.poster.event.dto.UpdateEventRequest;
 import ifmo.poster.event.entity.Event;
 import ifmo.poster.event.entity.EventTag;
+import ifmo.poster.event.entity.Seat;
 import ifmo.poster.contracts.exception.ResourceNotFoundException;
 import ifmo.poster.event.mapper.EventMapper;
 import ifmo.poster.event.mapper.TagMapper;
 import ifmo.poster.event.repository.EventRepository;
 import ifmo.poster.event.repository.EventTagRepository;
+import ifmo.poster.event.repository.SeatRepository;
 import ifmo.poster.event.repository.TagRepository;
+import ifmo.poster.event.repository.TicketTypeRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -22,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import ifmo.poster.event.config.EventProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -29,39 +34,26 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class EventService {
 
     private final EventRepository eventRepository;
     private final EventTagRepository eventTagRepository;
     private final TagRepository tagRepository;
+    private final SeatRepository seatRepository;
+    private final TicketTypeRepository ticketTypeRepository;
     private final TagService tagService;
     private final TransactionalOperator transactionalOperator;
     private final DatabaseClient databaseClient;
     private final Validator validator;
-
-    public EventService(
-            EventRepository eventRepository,
-            EventTagRepository eventTagRepository,
-            TagRepository tagRepository,
-            TagService tagService,
-            TransactionalOperator transactionalOperator,
-            DatabaseClient databaseClient,
-            Validator validator
-    ) {
-        this.eventRepository = eventRepository;
-        this.eventTagRepository = eventTagRepository;
-        this.tagRepository = tagRepository;
-        this.tagService = tagService;
-        this.transactionalOperator = transactionalOperator;
-        this.databaseClient = databaseClient;
-        this.validator = validator;
-    }
+    private final EventProperties eventProperties;
 
     public Mono<EventResponse> create(CreateEventRequest request) {
         Event event = EventMapper.toEntity(request);
         validateOrThrow(event);
         Mono<EventResponse> pipeline = eventRepository.save(event)
                 .flatMap(saved -> replaceTags(saved.getId(), request.tagNames()).thenReturn(saved))
+                .flatMap(saved -> createDefaultSeats(saved.getId()).thenReturn(saved))
                 .flatMap(this::toResponse);
         return transactionalOperator.transactional(pipeline);
     }
@@ -140,6 +132,23 @@ public class EventService {
                         .distinct(String::toLowerCase)
                         .concatMap(tagService::findOrCreateByName)
                         .concatMap(tag -> eventTagRepository.save(new EventTag(eventId, tag.getId()))))
+                .then();
+    }
+
+    private Mono<Void> createDefaultSeats(Long eventId) {
+        int seatsPerType = eventProperties.inventory().defaultSeatsPerTicketType();
+        return ticketTypeRepository.findAll()
+                .concatMap(ticketType -> Flux.range(1, seatsPerType)
+                        .concatMap(number -> {
+                            Seat seat = new Seat();
+                            seat.setEventId(eventId);
+                            seat.setTicketTypeId(ticketType.getId());
+                            seat.setNumber(number);
+                            seat.setRow("A");
+                            seat.setSectorName(ticketType.getTypeName());
+                            validateOrThrow(seat);
+                            return seatRepository.save(seat);
+                        }))
                 .then();
     }
 

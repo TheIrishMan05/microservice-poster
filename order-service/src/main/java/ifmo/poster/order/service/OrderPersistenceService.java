@@ -18,6 +18,7 @@ import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -28,16 +29,13 @@ import org.springframework.transaction.annotation.Transactional;
  * срабатывал через Spring proxy (не self-invocation из reactive-оркестратора).
  */
 @Service
+@RequiredArgsConstructor
 public class OrderPersistenceService {
 
     private final OrderRepository orderRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    public OrderPersistenceService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
 
     @Transactional
     public void clearAllData() {

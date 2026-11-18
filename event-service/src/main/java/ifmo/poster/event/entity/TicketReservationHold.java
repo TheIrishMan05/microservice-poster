@@ -15,7 +15,6 @@ import org.springframework.data.relational.core.mapping.Table;
 public class TicketReservationHold {
 
     @Id
-    @NotNull
     private Long id;
 
     @Column("reservation_id")

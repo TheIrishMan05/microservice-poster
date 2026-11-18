@@ -19,7 +19,6 @@ import org.springframework.data.relational.core.mapping.Table;
 public class EventRegistration {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("user_id")
@@ -35,8 +34,7 @@ public class EventRegistration {
     private LocalDateTime registrationDate;
 
     @Column("status")
-    @NotNull 
-    @Size (max = 20)
+    @NotNull
     private RegistrationStatus status;
 
     public EventRegistration(Long userId, Long eventId, RegistrationStatus status) {

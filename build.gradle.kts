@@ -32,6 +32,9 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
         finalizedBy(tasks.jacocoTestReport)
+        val postgresImage = providers.gradleProperty("postgresImage")
+                .orElse(providers.environmentVariable("POSTGRES_IMAGE"))
+        systemProperty("testcontainers.postgresql.image", postgresImage.get())
     }
 
     tasks.jacocoTestReport {

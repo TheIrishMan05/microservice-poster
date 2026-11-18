@@ -10,37 +10,29 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.reactive.TransactionalOperator;
+import ifmo.poster.contracts.support.PostgresTestImage;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 import reactor.test.StepVerifier;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = "spring.liquibase.enabled=true"
+)
 @ActiveProfiles("test")
 @Testcontainers
 class EventInventoryRepositoryIT {
 
     @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:15-alpine");
-
-    @DynamicPropertySource
-    static void datasourceProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.r2dbc.url", () ->
-                "r2dbc:postgresql://%s:%d/%s".formatted(
-                        POSTGRES.getHost(),
-                        POSTGRES.getFirstMappedPort(),
-                        POSTGRES.getDatabaseName()
-                ));
-        registry.add("spring.r2dbc.username", POSTGRES::getUsername);
-        registry.add("spring.r2dbc.password", POSTGRES::getPassword);
-        registry.add("spring.liquibase.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.liquibase.user", POSTGRES::getUsername);
-        registry.add("spring.liquibase.password", POSTGRES::getPassword);
-    }
+    @ServiceConnection
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
+            DockerImageName.parse(PostgresTestImage.resolve())
+    );
 
     @Autowired
     EventRepository eventRepository;

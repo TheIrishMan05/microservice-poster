@@ -11,6 +11,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
     
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("com.playtika.reactivefeign:feign-reactor-spring-cloud-starter:5.0.0")
     implementation("org.springframework.boot:spring-boot-http-converter")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
     
@@ -28,6 +29,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-liquibase-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")
     testImplementation("io.projectreactor:reactor-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("com.squareup.okhttp3:mockwebserver")

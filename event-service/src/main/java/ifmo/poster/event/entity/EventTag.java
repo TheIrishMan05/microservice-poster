@@ -15,7 +15,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @NoArgsConstructor
 public class EventTag {
     @Id
-    @NotNull 
     private Long id; 
 
     @Column("event_id")

@@ -12,23 +12,19 @@ import ifmo.poster.event.repository.TicketTypeRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
-    private final Validator validator; 
-
-    public TicketTypeService(TicketTypeRepository ticketTypeRepository, Validator validator) {
-        this.ticketTypeRepository = ticketTypeRepository;
-        this.validator = validator;
-    }
+    private final Validator validator;
 
     public Mono<TicketTypeResponse> create(CreateTicketTypeRequest request) {
         return ticketTypeRepository.existsByTypeNameIgnoreCase(request.typeName().trim())

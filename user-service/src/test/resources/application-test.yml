@@ -18,3 +18,10 @@ spring:
 eureka:
   client:
     enabled: false
+
+testcontainers:
+  postgresql:
+    image: ${POSTGRES_IMAGE:postgres:15-alpine}
+
+openapi:
+  server-url: http://localhost:8080

@@ -1,16 +1,16 @@
 package ifmo.poster.event.controller;
 
 import ifmo.poster.contracts.enums.EventStatus;
+import ifmo.poster.contracts.support.Pagination;
 import ifmo.poster.event.dto.BulkCreateEventsRequest;
 import ifmo.poster.event.dto.CreateEventRequest;
 import ifmo.poster.event.dto.EventResponse;
 import ifmo.poster.event.dto.UpdateEventRequest;
 import ifmo.poster.event.service.EventService;
-import ifmo.poster.contracts.support.Pagination;
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,70 +19,63 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/events")
+@RequiredArgsConstructor
 public class EventController {
 
     private final EventService eventService;
 
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
-    }
-
     @PostMapping
-    public Mono<ResponseEntity<EventResponse>> create(@Valid @RequestBody CreateEventRequest request) {
-        return eventService.create(request)
-                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<EventResponse> create(@Valid @RequestBody CreateEventRequest request) {
+        return eventService.create(request);
     }
 
     @PostMapping("/bulk")
-    public Mono<ResponseEntity<List<EventResponse>>> createBulk(
-            @Valid @RequestBody BulkCreateEventsRequest request
-    ) {
-        return eventService.createBulk(request.events())
-                .flatMap(body -> Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(body)));
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<List<EventResponse>> createBulk(@Valid @RequestBody BulkCreateEventsRequest request) {
+        return eventService.createBulk(request.events());
     }
 
     @DeleteMapping("/data")
-    public Mono<ResponseEntity<Void>> clearAllData() {
-        return eventService.clearAllData()
-                .then(Mono.just(ResponseEntity.noContent().build()));
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> clearAllData() {
+        return eventService.clearAllData();
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<EventResponse>> getById(@PathVariable Long id) {
-        return eventService.getById(id)
-                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
+    public Mono<EventResponse> getById(@PathVariable Long id) {
+        return eventService.getById(id);
     }
 
     /**
      * Infinite scroll without total count: cursor by {@code afterId}.
      */
     @GetMapping
-    public Mono<ResponseEntity<List<EventResponse>>> findAll(
+    public Mono<List<EventResponse>> findAll(
             @RequestParam(defaultValue = "0") Long afterId,
             @RequestParam(defaultValue = "" + Pagination.DEFAULT_PAGE_SIZE) int limit,
             @RequestParam(required = false) EventStatus status
     ) {
-        return eventService.findNextBatch(afterId, limit, status)
-                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
+        return eventService.findNextBatch(afterId, limit, status);
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<EventResponse>> update(
+    public Mono<EventResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateEventRequest request
     ) {
-        return eventService.update(id, request)
-                .flatMap(body -> Mono.just(ResponseEntity.ok(body)));
+        return eventService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> delete(@PathVariable Long id) {
-        return eventService.delete(id)
-                .then(Mono.just(ResponseEntity.noContent().build()));
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> delete(@PathVariable Long id) {
+        return eventService.delete(id);
     }
 }

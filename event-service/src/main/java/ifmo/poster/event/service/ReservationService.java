@@ -5,6 +5,7 @@ import ifmo.poster.contracts.event.ReserveTicketsRequest;
 import ifmo.poster.contracts.event.TicketReservationDto;
 import ifmo.poster.contracts.exception.ConflictException;
 import ifmo.poster.contracts.exception.ResourceNotFoundException;
+import ifmo.poster.event.config.EventProperties;
 import ifmo.poster.event.entity.TicketReservation;
 import ifmo.poster.event.entity.TicketReservationHold;
 import ifmo.poster.event.entity.TicketType;
@@ -14,17 +15,18 @@ import ifmo.poster.event.repository.TicketReservationRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class ReservationService {
 
     private final EventService eventService;
@@ -33,29 +35,16 @@ public class ReservationService {
     private final TicketReservationHoldRepository holdRepository;
     private final SeatRepository seatRepository;
     private final TransactionalOperator transactionalOperator;
-    private final Validator validator; 
-
-    public ReservationService(
-            EventService eventService,
-            TicketTypeService ticketTypeService,
-            TicketReservationRepository reservationRepository,
-            TicketReservationHoldRepository holdRepository,
-            SeatRepository seatRepository,
-            TransactionalOperator transactionalOperator,
-            Validator validator
-    ) {
-        this.eventService = eventService;
-        this.ticketTypeService = ticketTypeService;
-        this.reservationRepository = reservationRepository;
-        this.holdRepository = holdRepository;
-        this.seatRepository = seatRepository;
-        this.transactionalOperator = transactionalOperator;
-        this.validator = validator;
-    }
+    private final Validator validator;
+    private final EventProperties eventProperties;
 
     public Mono<TicketReservationDto> reserve(ReserveTicketsRequest request) {
-        if (request.quantity() < 1 || request.quantity() > 50) {
-            return Mono.error(new IllegalArgumentException("quantity должен быть от 1 до 50"));
+        int minQuantity = eventProperties.reservation().minQuantity();
+        int maxQuantity = eventProperties.reservation().maxQuantity();
+        if (request.quantity() < minQuantity || request.quantity() > maxQuantity) {
+            return Mono.error(new IllegalArgumentException(
+                    "quantity должен быть от " + minQuantity + " до " + maxQuantity
+            ));
         }
         
         Mono<TicketReservationDto> pipeline = eventService.requireEvent(request.eventId())
