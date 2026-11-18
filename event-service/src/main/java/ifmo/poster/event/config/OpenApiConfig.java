@@ -16,7 +16,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Event Service API")
-                        .description("События, теги, регистрации, типы билетов и waitlist")
+                        .description("События, места (seats), теги, регистрации, типы билетов и waitlist")
                         .version("1.0.0"))
                 .servers(List.of(new Server()
                         .url(serverUrl)

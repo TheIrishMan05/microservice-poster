@@ -88,6 +88,71 @@ class EventApiIT {
     }
 
     @Test
+    void listSeatsForEventWithAvailabilityFilter() {
+        Long eventId = createEvent("Seats Showcase", EventStatus.ACTIVE, List.of("demo"));
+        Long ticketTypeId = ticketTypeIdByName("VIP");
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/events/{eventId}/seats")
+                        .queryParam("page", 0)
+                        .queryParam("size", 10)
+                        .build(eventId))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().exists("X-Total-Count")
+                .expectBody()
+                .jsonPath("$").isArray()
+                .jsonPath("$[0].eventId").isEqualTo(eventId.intValue())
+                .jsonPath("$[0].available").isEqualTo(true);
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/events/{eventId}/seats")
+                        .queryParam("ticketTypeId", ticketTypeId)
+                        .queryParam("availableOnly", true)
+                        .queryParam("page", 0)
+                        .queryParam("size", 5)
+                        .build(eventId))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(5)
+                .jsonPath("$[0].ticketTypeId").isEqualTo(ticketTypeId.intValue())
+                .jsonPath("$[0].available").isEqualTo(true);
+
+        webTestClient.post()
+                .uri("/internal/events/reservations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of(
+                        "eventId", eventId,
+                        "ticketTypeId", ticketTypeId,
+                        "quantity", 2
+                ))
+                .exchange()
+                .expectStatus().isCreated();
+
+        String availableCount = webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/events/{eventId}/seats")
+                        .queryParam("ticketTypeId", ticketTypeId)
+                        .queryParam("availableOnly", true)
+                        .queryParam("page", 0)
+                        .queryParam("size", 50)
+                        .build(eventId))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().exists("X-Total-Count")
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .getFirst("X-Total-Count");
+
+        assertThat(availableCount).isNotBlank();
+        // default-seats-per-ticket-type=20, после reserve(2) свободных VIP остаётся 18
+        assertThat(Long.parseLong(availableCount)).isEqualTo(18L);
+    }
+
+    @Test
     void reserveAndCancelTicketsForActiveEvent() {
         Long eventId = createEvent("Festival", EventStatus.ACTIVE, List.of("fest"));
         // VIP уже создан Liquibase seed (004), повторный POST даёт 409
