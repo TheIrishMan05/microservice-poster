@@ -18,12 +18,5 @@ testcontainers:
   postgresql:
     image: ${POSTGRES_IMAGE:postgres:15-alpine}
 
-event:
-  inventory:
-    default-seats-per-ticket-type: 20
-  reservation:
-    min-quantity: 1
-    max-quantity: 50
-
 openapi:
   server-url: http://localhost:8080
