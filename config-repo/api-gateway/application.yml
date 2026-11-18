@@ -9,7 +9,7 @@ spring:
           discovery:
             locator:
               enabled: false
-          
+
           routes:
             - id: user-service
               uri: lb://user-service

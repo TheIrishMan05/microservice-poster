@@ -6,6 +6,9 @@ eureka:
   instance:
     lease-renewal-interval-in-seconds: 5
 
+openapi:
+  server-url: http://localhost:8080
+
 logging:
   level:
     root: INFO
