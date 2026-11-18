@@ -1,58 +1,19 @@
 services:
 
-  postgres-user:
-    image: postgres:15-alpine
-    container_name: db-user
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    container_name: postgres
     environment:
       POSTGRES_DB: user_db
       POSTGRES_USER: ${DB_ADMIN}
       POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    ports:
-      - "${DB_USER_PORT}:5432"
+    expose:
+      - "5432"
     volumes:
-      - pgdata-user:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN} -d user_db"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
-    networks:
-      - poster-net
-
-  postgres-event:
-    image: postgres:15-alpine
-    container_name: db-event
-    environment:
-      POSTGRES_DB: event_db
-      POSTGRES_USER: ${DB_ADMIN}
-      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    ports:
-      - "${DB_EVENT_PORT}:5432"
-    volumes:
-      - pgdata-event:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN} -d event_db"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
-    networks:
-      - poster-net
-
-  postgres-order:
-    image: postgres:15-alpine
-    container_name: db-order
-    environment:
-      POSTGRES_DB: order_db
-      POSTGRES_USER: ${DB_ADMIN}
-      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
-    ports:
-      - "${DB_ORDER_PORT}:5432"
-    volumes:
-      - pgdata-order:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN} -d order_db"]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -84,8 +45,8 @@ services:
       context: .
       dockerfile: config-server/Dockerfile
     container_name: config-server
-    ports:
-      - "${CONFIG_PORT}:8888"
+    expose:
+      - "8888"
     environment:
       JAVA_OPTS: "-Xmx256m"
     volumes:
@@ -136,7 +97,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
-      postgres-user:
+      postgres:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -164,7 +125,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
-      postgres-event:
+      postgres:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -192,7 +153,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       JAVA_OPTS: "-Xmx512m"
     depends_on:
-      postgres-order:
+      postgres:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -217,6 +178,4 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata-user:
-  pgdata-event:
-  pgdata-order:
+  postgres-data:
