@@ -11,6 +11,7 @@ import ifmo.poster.order.dto.OrderResponse;
 import ifmo.poster.order.dto.UpdateOrderStatusRequest;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
@@ -27,16 +29,6 @@ public class OrderService {
     private final UserClientService userClientService;
     private final EventClientService eventClientService;
     private final OrderPersistenceService persistenceService;
-
-    public OrderService(
-            UserClientService userClientService,
-            EventClientService eventClientService,
-            OrderPersistenceService persistenceService
-    ) {
-        this.userClientService = userClientService;
-        this.eventClientService = eventClientService;
-        this.persistenceService = persistenceService;
-    }
 
     public Mono<OrderResponse> create(CreateOrderRequest request) {
         return userClientService.getById(request.userId())

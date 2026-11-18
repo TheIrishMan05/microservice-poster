@@ -18,16 +18,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -36,16 +37,6 @@ public class UserService {
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    public UserService(
-            UserRepository userRepository,
-            NotificationRepository notificationRepository,
-            PlatformTransactionManager transactionManager
-    ) {
-        this.userRepository = userRepository;
-        this.notificationRepository = notificationRepository;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-    }
 
     public Mono<UserResponse> create(CreateUserRequest request) {
         return Mono.fromCallable(() -> transactionTemplate.execute(status -> createOne(request)))

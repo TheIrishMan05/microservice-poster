@@ -6,6 +6,7 @@ import ifmo.poster.contracts.support.Pagination;
 import ifmo.poster.order.dto.TicketResponse;
 import ifmo.poster.order.mapper.OrderMapper;
 import ifmo.poster.order.repository.TicketRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -13,13 +14,10 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
+@RequiredArgsConstructor
 public class TicketService {
 
     private final TicketRepository ticketRepository;
-
-    public TicketService(TicketRepository ticketRepository) {
-        this.ticketRepository = ticketRepository;
-    }
 
     public Mono<TicketResponse> getById(Long id) {
         return Mono.fromCallable(() -> ticketRepository.findById(id)

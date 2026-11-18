@@ -12,23 +12,19 @@ import ifmo.poster.event.repository.TagRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
+@RequiredArgsConstructor
 public class TagService {
 
     private final TagRepository tagRepository;
     private final Validator validator;
-
-    public TagService(TagRepository tagRepository, Validator validator) {
-        this.tagRepository = tagRepository;
-        this.validator = validator;
-    }
 
     public Mono<TagResponse> create(CreateTagRequest request) {
         return tagRepository.existsByNameIgnoreCase(request.name().trim())

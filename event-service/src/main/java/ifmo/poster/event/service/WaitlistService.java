@@ -13,37 +13,24 @@ import ifmo.poster.event.repository.TicketWaitlistRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class WaitlistService {
 
     private final TicketWaitlistRepository waitlistRepository;
     private final EventService eventService;
     private final TicketTypeService ticketTypeService;
     private final TransactionalOperator transactionalOperator;
-    private final Validator validator; // Добавлен валидатор
-
-    public WaitlistService(
-            TicketWaitlistRepository waitlistRepository,
-            EventService eventService,
-            TicketTypeService ticketTypeService,
-            TransactionalOperator transactionalOperator,
-            Validator validator
-    ) {
-        this.waitlistRepository = waitlistRepository;
-        this.eventService = eventService;
-        this.ticketTypeService = ticketTypeService;
-        this.transactionalOperator = transactionalOperator;
-        this.validator = validator;
-    }
+    private final Validator validator;
 
     public Mono<WaitlistResponse> create(CreateWaitlistRequest request) {
         Mono<WaitlistResponse> pipeline = eventService.requireEvent(request.eventId())

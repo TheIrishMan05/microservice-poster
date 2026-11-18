@@ -12,34 +12,23 @@ import ifmo.poster.event.repository.EventRegistrationRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
+@RequiredArgsConstructor
 public class RegistrationService {
 
     private final EventRegistrationRepository registrationRepository;
     private final EventService eventService;
     private final TransactionalOperator transactionalOperator;
-    private final Validator validator; 
-    
-    public RegistrationService(
-            EventRegistrationRepository registrationRepository,
-            EventService eventService,
-            TransactionalOperator transactionalOperator,
-            Validator validator
-    ) {
-        this.registrationRepository = registrationRepository;
-        this.eventService = eventService;
-        this.transactionalOperator = transactionalOperator;
-        this.validator = validator;
-    }
+    private final Validator validator;
 
     public Mono<RegistrationResponse> create(CreateRegistrationRequest request) {
         Mono<RegistrationResponse> pipeline = eventService.requireEvent(request.eventId())
