@@ -16,15 +16,18 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import ifmo.poster.contracts.support.PostgresTestImage;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -33,7 +36,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class OrderFeignContractIT {
 
     @Container
-    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:15-alpine");
+    @ServiceConnection
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
+            DockerImageName.parse(PostgresTestImage.resolve())
+    );
 
     static MockWebServer userService;
     static MockWebServer eventService;
@@ -52,16 +58,11 @@ class OrderFeignContractIT {
         eventService.shutdown();
     }
 
+    /** Порты MockWebServer известны только после старта — в YAML заранее не прописать. */
     @DynamicPropertySource
-    static void props(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+    static void mockDownstreamUrls(DynamicPropertyRegistry registry) {
         registry.add("clients.user-service.url", () -> userService.url("/").toString().replaceAll("/$", ""));
         registry.add("clients.event-service.url", () -> eventService.url("/").toString().replaceAll("/$", ""));
-        registry.add("resilience4j.retry.instances.userService.maxAttempts", () -> "1");
-        registry.add("resilience4j.retry.instances.eventService.maxAttempts", () -> "1");
     }
 
     @Autowired

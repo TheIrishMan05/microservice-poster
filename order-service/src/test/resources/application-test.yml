@@ -26,3 +26,10 @@ resilience4j:
         maxAttempts: 1
       eventService:
         maxAttempts: 1
+
+testcontainers:
+  postgresql:
+    image: ${POSTGRES_IMAGE:postgres:15-alpine}
+
+openapi:
+  server-url: http://localhost:8080

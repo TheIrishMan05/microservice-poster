@@ -8,16 +8,18 @@ import java.sql.Statement;
 import liquibase.integration.spring.SpringLiquibase;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import ifmo.poster.contracts.support.PostgresTestImage;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 class EventMigrationsTest {
 
     @Container
     private static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:15-alpine");
+            new PostgreSQLContainer(DockerImageName.parse(PostgresTestImage.resolve()));
 
     @Test
     void appliesAllMigrationsAndCreatesOnePrimaryKeyForEventTags() throws Exception {
