@@ -98,11 +98,22 @@
 
 ---
 
-## 5. Заказ (сквозной) — `order-service`
+## 5. Места события (каталог перед заказом) — `event-service`
+
+1. Найти id события (`GET /api/events?afterId=0&limit=5`).
+2. `GET /api/events/{eventId}/seats?page=0&size=20` — все места, смотреть **`X-Total-Count`** и поле `available`.
+3. Опционально:
+   - `ticketTypeId=1` — только выбранный тип;
+   - `availableOnly=true` — только свободные (без `reservationId`).
+
+---
+
+## 6. Заказ (сквозной) — `order-service`
 
 Нужны: пользователь (например id **1** = `admin`), событие **`Demo Event #01`** (ACTIVE + seats VIP), тип билета **VIP** (`GET /api/ticket-types`, обычно id **1**).
 
-1. В **event-service**: `GET /api/events?afterId=0&limit=5` — найти id `Demo Event #01`.
+1. В **event-service**: `GET /api/events?afterId=0&limit=5` — найти id `Demo Event #01`.  
+   Перед заказом можно глянуть `GET /api/events/{id}/seats?availableOnly=true`.
 2. В **order-service**: `POST /api/orders`
 
 ```json
