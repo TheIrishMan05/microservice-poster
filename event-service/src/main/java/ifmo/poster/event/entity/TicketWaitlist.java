@@ -17,7 +17,6 @@ import org.springframework.data.relational.core.mapping.Table;
 public class TicketWaitlist {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("user_id")
@@ -33,8 +32,7 @@ public class TicketWaitlist {
     private Long ticketTypeId;
 
     @Column("status")
-    @NotNull 
-    @Size (max = 20)
+    @NotNull
     private WaitlistStatus status;
 
     @Column("created_at")

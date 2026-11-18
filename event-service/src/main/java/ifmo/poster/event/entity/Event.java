@@ -19,7 +19,6 @@ import lombok.Setter;
 public class Event {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("event_name")
@@ -41,7 +40,6 @@ public class Event {
     private LocalDateTime dateTime;
 
     @Column("status")
-    @Size(max = 20)
     @NotNull
     private EventStatus status = EventStatus.PENDING;
 

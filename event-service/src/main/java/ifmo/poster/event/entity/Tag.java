@@ -14,7 +14,6 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Tag {
 
     @Id
-    @NotNull 
     private Long id;
 
     @Column("name")
