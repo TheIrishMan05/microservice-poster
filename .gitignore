@@ -17,6 +17,7 @@
 *.nar
 *.ear
 *.zip
+gradle/wrapper/gradle-9.8.2-bin.zip
 *.tar.gz
 *.rar
 
