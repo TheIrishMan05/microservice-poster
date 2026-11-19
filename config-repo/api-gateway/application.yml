@@ -3,7 +3,11 @@ server:
 
 spring:
   cloud:
+    loadbalancer:
+      cache:
+        enabled: false
     gateway:
+
       server:
         webflux:
           discovery:

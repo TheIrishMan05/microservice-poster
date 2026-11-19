@@ -21,12 +21,16 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
   cloud:
+    loadbalancer:
+      cache:
+        enabled: false
     openfeign:
       client:
         config:
           default:
             connectTimeout: 3000
             readTimeout: 5000
+
 
 resilience4j:
   circuitbreaker:
@@ -36,19 +40,30 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+        ignoreExceptions:
+          - ifmo.poster.contracts.exception.ResourceNotFoundException
       eventService:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+        ignoreExceptions:
+          - ifmo.poster.contracts.exception.ResourceNotFoundException
   retry:
     instances:
       userService:
         maxAttempts: 3
         waitDuration: 300ms
+        ignoreExceptions:
+          - ifmo.poster.contracts.exception.ResourceNotFoundException
       eventService:
         maxAttempts: 3
         waitDuration: 300ms
+        ignoreExceptions:
+          - ifmo.poster.contracts.exception.ResourceNotFoundException
+
+
+
 
 eureka:
   client:

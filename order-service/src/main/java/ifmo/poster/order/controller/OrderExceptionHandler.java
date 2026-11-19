@@ -50,6 +50,15 @@ public class OrderExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, "Ошибка валидации", detail);
     }
 
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ProblemDetail handleUnexpected(Exception exception) {
+        String detail = exception.getMessage() == null || exception.getMessage().isBlank()
+                ? "Внутренняя ошибка сервиса заказов"
+                : exception.getMessage();
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Внутренняя ошибка", detail);
+    }
+
     private static ProblemDetail problem(HttpStatus status, String title, String detail) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
         problemDetail.setTitle(title);
